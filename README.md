@@ -28,7 +28,7 @@ Photos and extraction responses remain in the current browser session; the actio
 
 `npm test` checks Convex actions, quotas, validators, source/date isolation and null versus zero with fabricated records and simulated provider replies. Legacy API protections remain covered. `npm run test:phone` drives Chrome at 320px/390px: photo selection/retry, separate readings, selected-date checks, missing/wrong DSR rows, ₹ formatting, stale-response rejection and clearing old results. `npm run build` checks types and builds the page. These checks do not prove real mixed-photo handwriting accuracy, photo date accuracy or sufficiency of the 6,000-token comparison cap. No paid test call was approved for this revision.
 
-Keep real records outside public/src, preferably in ignored `private-dsr/` on the laptop. Real JPEG/PNG/WebP/HEIC/PDF/Excel/CSV files and `.env.local` are ignored. Public tests use only made-up records; proof screenshots stay under ignored `.test-results/`. PROGRESS.md remains empty at the owner's earlier request.
+Keep real records outside public/src, preferably in ignored `private-dsr/` on the laptop. Real JPEG/PNG/WebP/HEIC/PDF/Excel/CSV files and `.env.local` are ignored. Public tests use only made-up records; proof screenshots stay under ignored `.test-results/`. PROGRESS.md records the owner-confirmed milestone 1 checkpoint; contextual comparison remains a trial.
 
 The public code repository is https://github.com/harendrachilwal-maker/dsr-check. No production deployment or public app launch has been set up. Shipping follows AGENTS.md after owner acceptance. Production key, spend cap and access rules remain required before public paid use.
 

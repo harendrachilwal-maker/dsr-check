@@ -1,0 +1,1 @@
+2026-10-09 — Milestone 1 confirmed working by the owner: DSR photo extraction, unreadable fields shown as Not extracted, and Indian ₹ formatting; code saved to https://github.com/harendrachilwal-maker/dsr-check.
