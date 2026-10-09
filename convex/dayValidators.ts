@@ -1,0 +1,18 @@
+import { v } from 'convex/values';
+import { moneyRoles, paymentMethods } from '../src/comparison';
+const amount=v.union(v.number(),v.null());
+const text=v.union(v.string(),v.null());
+const section=v.union(v.literal('Sales'),v.literal('Payment'),v.literal('Expense'),v.literal('Cash balance'),v.null());
+const savedLine=v.object({id:v.string(),source:v.number(),documentDate:text,section,aiLabel:text,label:text,aiValue:amount,correctedValue:v.optional(amount),correctedLabel:v.optional(v.string()),unclear:v.boolean(),aiUnclear:v.boolean(),writtenTotal:v.boolean()});
+const check=v.object({title:v.string(),status:v.union(v.literal('Matched'),v.literal('Difference'),v.literal('Not enough information')),dsr:amount,evidence:amount,difference:amount,note:v.string(),sources:v.array(v.string())});
+const role=v.union(...moneyRoles.map(value=>v.literal(value)));
+const method=v.union(...paymentMethods.map(value=>v.literal(value)));
+const context=v.object({source:v.number(),line:v.number(),role,party:text,purpose:text,billRef:text,transactionRef:text,method,unclear:v.boolean()});
+const choice=v.object({id:v.string(),role,party:text,purpose:text,method,link:text});
+const aiLine=v.object({section,label:text,amount,unclear:v.boolean()});
+const document=v.object({source:v.number(),kind:v.union(v.literal('Daily sheet'),v.literal('Handwritten DSR'),v.literal('Guest bill'),v.literal('Food bill'),v.literal('Expense bill'),v.literal('UPI record'),v.literal('Not identified')),date:text,lines:v.array(aiLine)});
+const reading=v.object({date:v.string(),documents:v.array(document),contexts:v.array(context),dsrSources:v.array(v.number())});
+const snapshotFields={date:v.string(),lines:v.array(savedLine),writtenTotals:v.array(savedLine),checks:v.array(check),aiReading:reading,aiAnswerText:v.string(),choices:v.array(choice)};
+export const daySnapshot=v.object(snapshotFields);
+export const savedDay=v.object({...snapshotFields,confirmedAt:v.number(),version:v.id('confirmedVersions')});
+export const historyResult=v.object({days:v.array(v.object({date:v.string(),confirmedAt:v.number(),version:v.id('confirmedVersions')})),cursor:text});

@@ -1,6 +1,6 @@
-# Digital DSR — contextual comparison trial
+# Digital DSR — manager review and History trial
 
-The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. There is no report-format selector, Excel option, separate supporting-record category form, login, confirmation, owner approval, WhatsApp or owner dashboard.
+The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. The current dev step adds inline correction, Confirm day and History. There is no report-format selector, Excel option, separate supporting-record category form, login, owner approval, WhatsApp or owner dashboard. The owner confirmed this step works on dev. Production remains the previous deployed version; deployment of this step has not been authorised.
 
 ## Phone test
 
@@ -22,7 +22,15 @@ The current photo request is `{mode:"compare", date, dsrSources, images:[...]}`.
 
 The screen validates and renders the latest raw response, ignoring independent extracted objects, dates or supplied totals. Bills never fill blank DSR cells. Original figures remain grouped within each photo. Convex separately calculates comparison totals using integer paise, then the page verifies those results against the same latest raw response. It never substitutes independent simulated totals. Only handwritten DSR section totals use the existing integer-paise calculation: explicit Total labels are excluded, uncertainty makes totals incomplete, and readable subtotals remain separate. Daily-sheet columns and written summary totals are displayed individually to avoid counting a total and its components twice.
 
-Photos and extraction responses remain in the current browser session; the action sends the images to Convex and OpenAI but does not save or log them. Refresh clears the current selection and reading. `store:false` disables Responses storage, not all provider processing retention. Earlier separately uploaded supporting originals remain preserved in development Convex storage and metadata, with no public file-read/list route. Legacy automatic-date/Excel API paths remain for previously opened clients; the current page does not offer them. Contextual comparison is the current milestone. Confirmed report persistence and financial approval remain later milestones.
+Photos and unconfirmed readings remain in the current browser session; the extraction action sends the images to Convex and OpenAI but does not save or log them. Refresh clears the current selection and draft. Confirm day saves only the structured reading, original AI answer text, corrections, written totals, calculated checks and confirmation time. `store:false` disables Responses storage, not all provider processing retention. Earlier separately uploaded supporting originals remain preserved in development Convex storage and metadata, with no public file-read/list route. Legacy automatic-date/Excel API paths remain for previously opened clients; the current page does not offer them. Financial approval remains a later milestone.
+
+## Correct, confirm and reopen on dev
+
+Use `http://192.168.1.4:5173` on the phone with the laptop on the same Wi-Fi and `npm run dev` running. Choose the document's date and scan as before. Each extracted line has Correct and View original. Save Correction validates the label/amount and rechecks in Convex without another AI call; Cancel keeps the old value. Blank amount means Not extracted, not zero. Original AI values and the raw reply remain unchanged.
+
+Tap Confirm day after reviewing. The date must come from an identified DSR document. Missing or uncertain values remain flagged in the saved report. History shows dates newest first; open a date to see its saved lines, AI values, corrections, written totals and Matches/Differs checks. Confirming that date again asks "Replace the saved day?"; Cancel preserves it, and replacement creates a new version while retaining the previous one.
+
+History is private to the current browser without a login. A random 256-bit access key remains in browser storage; the backend checks it before every save/read and stores only its hash. Changing browser/device or clearing browser storage loses access to that browser's History. Dev and production use separate keys and records. Photos are never part of a confirmed day.
 
 ## Verification and private records
 

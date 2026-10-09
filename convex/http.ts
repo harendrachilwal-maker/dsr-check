@@ -8,6 +8,8 @@ import { selectDailyRow, validDate, recordKinds, recordType } from '../src/daily
 import { documentInstructions, documentSchema } from '../src/document-request';
 import { comparisonReadingFromRaw, buildComparison } from '../src/comparison';
 import { comparisonSchema, comparisonInstructions } from '../src/comparison-request';
+import { applyCorrections } from '../src/confirmed-day';
+import { registerDayRoutes } from './daysHttp';
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
 export const extract = httpAction(async (ctx, request) => {
@@ -140,10 +142,11 @@ export const compare = httpAction(async (_ctx,request)=>{
     const body=JSON.parse(new TextDecoder().decode(bytes));
     if(!validDate(body.date)||!Array.isArray(body.sources)||!body.sources.length||body.sources.length>6||body.sources.some((source:number,index:number)=>source!==index+1)||!Array.isArray(body.dsrSources)||!body.dsrSources.length||new Set(body.dsrSources).size!==body.dsrSources.length||body.dsrSources.some((source:number)=>!body.sources.includes(source)))return reply({error:'Read the selected date’s DSR before comparing.'},400);
     const reading=comparisonReadingFromRaw(body.raw,body.date,body.sources,body.dsrSources);
-    return reply({comparison:buildComparison(reading,body.choices)});
+    return reply({comparison:buildComparison(applyCorrections(reading,body.corrections??[]),body.choices)});
   }catch{return reply({error:'This context could not be checked. Check the selected expense and try again.'},400);}
 });
 http.route({path:'/compare',method:'POST',handler:compare});
 http.route({path:'/compare',method:'OPTIONS',handler:httpAction(async()=>new Response(null,{status:204,headers}))});
 
+registerDayRoutes(http);
 registerStaticRoutes(http, components.staticHosting);

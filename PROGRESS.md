@@ -1,2 +1,3 @@
 2026-10-09 — Milestone 1 confirmed working by the owner: DSR photo extraction, unreadable fields shown as Not extracted, and Indian ₹ formatting; code saved to https://github.com/harendrachilwal-maker/dsr-check.
 2026-10-09 — Owner confirmed the first production deployment at https://ideal-mongoose-563.convex.site; Convex Static Hosting and npm run deploy added without changing app behaviour.
+2026-10-09 — Milestone 2 confirmed working on dev by the owner: inline label/amount corrections, Confirm day, saved versions and History; replacement asks first, photos are not saved, and original AI values remain preserved. Tests: 50 unit tests, 12 phone-width checks and one successful real-photo dev flow. Production unchanged; deployment not authorised.
