@@ -1,3 +1,4 @@
+import { displayDate } from '../../src/date-display';
 import {test,expect} from '@playwright/test';
 import {makeRaw,comparisonDate as date} from '../comparison-fixture';
 for(const width of [320,390])test(`open sign-up, private History, sign-out and sign-in at ${width}px`,async({page,request})=>{
@@ -14,11 +15,11 @@ for(const width of [320,390])test(`open sign-up, private History, sign-out and s
  await expect(page.getByLabel('Reporting date',{exact:true})).toBeVisible({timeout:30000});
  const historyRequest=page.waitForRequest('**/days/history');await page.getByRole('button',{name:'History',exact:true}).click();const authorization=(await historyRequest).headers().authorization;
  const saved=await request.post(`${endpoint}/days/confirm`,{headers:{Authorization:authorization},data:{raw:makeRaw(),date,sources:[1,2,3,4,5],dsrSources:[1],choices:[],corrections:[],expectedVersion:null}});expect(saved.status()).toBe(200);
- await page.reload();await page.getByRole('button',{name:'History',exact:true}).click();await expect(page.getByRole('button',{name:date,exact:true})).toBeVisible();
+ await page.reload();await page.getByRole('button',{name:'History',exact:true}).click();await expect(page.getByRole('button',{name:displayDate(date),exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByRole('heading',{name:'Manager sign-in',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'History',exact:true})).toHaveCount(0);
  await page.getByLabel('Email',{exact:true}).fill(email);await page.getByLabel('Password',{exact:true}).fill('Wrong-Password-2026');await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Sign-in failed');
  await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByLabel('Reporting date',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:date,exact:true}).click();await expect(page.locator('#history-page')).toContainText('Confirmed day');
+ await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:displayDate(date),exact:true}).click();await expect(page.locator('#history-page')).toContainText('Confirmed day');
  await page.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByRole('heading',{name:'Manager sign-in',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Create an account',exact:true}).click();await page.getByLabel('Email',{exact:true}).fill(`other-${crypto.randomUUID()}@example.invalid`);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Create account',exact:true}).click();await expect(page.getByLabel('Reporting date',{exact:true})).toBeVisible();
  const otherRequest=page.waitForRequest('**/days/history');await page.getByRole('button',{name:'History',exact:true}).click();const otherAuthorization=(await otherRequest).headers().authorization;

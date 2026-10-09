@@ -1,3 +1,5 @@
+import { displayDate, displayTime, displayMonth } from './date-display';
+import { historySummary, historyStatus } from './history-summary';
 import { authenticatedFetch } from './session';
 import { displayAmount, displayLineAmount, sections, type DsrLine } from './extraction';
 import { applyCorrections, checkWord, parseAmount, prepareDay, type Correction, type SavedDay, type SavedLine } from './confirmed-day';
@@ -7,19 +9,19 @@ export type ReviewState={raw:unknown;reading:Reading;choices:Choice[];correction
 type Deps={endpoint:string;state:()=>ReviewState|null;photos:()=>{url:string}[];busy:()=>boolean;refreshControls:()=>void;apply:(changes:Correction[])=>Promise<void>};
 const el=<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
 const button=(text:string,click:()=>void)=>{const node=el('button',text);node.type='button';node.className='secondary';node.onclick=click;return node;};
-const time=(value:number)=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'medium',timeZone:'Asia/Kolkata'}).format(value)+' IST';
+const time=displayTime;
 const savedAmount=(line:SavedLine)=>{const amount=Object.hasOwn(line,'correctedValue')?line.correctedValue!:line.aiValue;return displayAmount(amount)+(line.unclear&&amount!==null?'?':'');};
 export class DayReview {
   private manager=el('section');private history=el('section');private content=el('div');
   private navHistory:HTMLButtonElement;private navUpload:HTMLButtonElement;
   private confirmButton:HTMLButtonElement;private confirmStatus=el('p');private confirmError=el('p');
-  private active:string|null=null;private saving=false;private historyRequest=0;
+  private active:string|null=null;private saving=false;private historyRequest=0;private latestRequest=0;
   constructor(private deps:Deps){
     const app=document.getElementById('app')!;
     this.manager.id='manager-page';this.manager.append(...Array.from(app.childNodes));
     const nav=el('nav');nav.setAttribute('aria-label','Manager pages');
     this.navUpload=button('Upload DSR',()=>this.showUpload());this.navHistory=button('History',()=>{void this.showHistory();});
-    nav.append(this.navUpload,this.navHistory);this.history.id='history-page';this.history.hidden=true;
+    nav.append(this.navUpload,this.navHistory);this.history.id='history-page';this.history.hidden=true;this.content.className='history-content';
     const heading=el('h1','History');heading.tabIndex=-1;
     this.history.append(heading,el('p','Confirmed days, newest first. Saved days are private to your account. Photos are not saved.'),this.content);
     app.append(nav,this.manager,this.history);
@@ -38,7 +40,18 @@ export class DayReview {
     document.getElementById('confirmation')!.hidden=!state;
     document.querySelectorAll<HTMLButtonElement>('[data-correct]').forEach(button=>{button.disabled=this.saving||this.active!==null||this.deps.busy()||!!state?.updating;});
   }
-  showUpload(){this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');}
+  showUpload(){this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');void this.loadLatest();}
+  private async loadLatest(){
+    const request=++this.latestRequest,line=document.getElementById('last-confirmed');if(!line)return;
+    line.replaceChildren(el('span','Last confirmed: Loading…'));
+    try{
+      const {day}=await this.request('/days/latest');if(request!==this.latestRequest)return;
+      line.textContent=`Last confirmed: ${day?displayDate(day.date):'None yet'}`;
+    }catch{
+      if(request!==this.latestRequest)return;
+      line.replaceChildren(el('span','Last confirmed: Could not load.'),button('Retry',()=>{void this.loadLatest();}));
+    }
+  }
   private async request(path:string,body?:unknown){
     const response=await authenticatedFetch(`${this.deps.endpoint}${path}`,{method:body===undefined?'GET':'POST',headers:{...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});
     const data=await response.json();if(!response.ok&&response.status!==409)throw new Error(data.error??'The saved day could not be loaded. Try again.');return data;
@@ -98,35 +111,76 @@ export class DayReview {
         if(!window.confirm('Replace the saved day?')){this.confirmStatus.textContent='Saved day kept. Your current corrections are still here.';return;}
         body.expectedVersion=result.version;result=await this.request('/days/confirm',body);
       }
-      this.confirmStatus.textContent=`Day confirmed and saved — ${state.reading.date}.`;this.navHistory.focus();
+      this.confirmStatus.textContent=`Day confirmed and saved — ${displayDate(state.reading.date)}.`;this.navHistory.focus();void this.loadLatest();
     }catch(cause){this.confirmError.textContent=cause instanceof Error?cause.message:'Your day could not be confirmed. Try again.';this.confirmError.hidden=false;}
     finally{this.saving=false;this.deps.refreshControls();this.sync();}
   }
   async showHistory(){
     if(this.saving||this.deps.busy())return;
     const request=++this.historyRequest;this.manager.hidden=true;this.history.hidden=false;this.navHistory.setAttribute('aria-current','page');this.navUpload.removeAttribute('aria-current');
-    this.history.querySelector('h1')!.focus();this.content.replaceChildren(el('p','Loading your saved days…'));
+    this.history.querySelector('h1')!.focus();await this.changeView(()=>{if(request===this.historyRequest)this.content.replaceChildren(el('p','Loading your saved days…'));});
+    if(request!==this.historyRequest)return;
     try{
       const data=await this.request('/days/history');if(request!==this.historyRequest)return;
-      this.content.replaceChildren();const list=el('ul');list.className='history-list';this.content.append(list);
-      const append=(days:{date:string;confirmedAt:number}[])=>{for(const day of days){const item=el('li');const open=button(day.date,()=>{void this.openDay(day.date);});item.append(open,el('p',`Confirmed: ${time(day.confirmedAt)}`));list.append(item);}};
+      const groups=el('div');this.content.replaceChildren(groups);const months=new Map<string,HTMLUListElement>();
+      const append=(days:{date:string;confirmedAt:number;version:string}[])=>{
+        const queue=days.map(day=>{
+          const key=day.date.slice(0,7);let list=months.get(key);
+          if(!list){
+            const group=el('section');group.className='history-month';group.setAttribute('aria-label',displayMonth(day.date));
+            list=el('ul');list.className='history-list';group.append(el('h2',displayMonth(day.date)),list);groups.append(group);months.set(key,list);
+          }
+          const item=el('li');item.className='history-card';
+          const open=button(displayDate(day.date),()=>{void this.openDay(day.date);});open.className='day-open';
+          const badge=el('span');badge.className='day-badge';badge.hidden=true;
+          const header=el('div');header.className='day-card-header';header.append(open,badge);
+          const stamp=el('p',`Confirmed: ${time(day.confirmedAt)}`);stamp.className='day-stamp';
+          const values=el('dl');values.className='day-metrics';values.setAttribute('aria-label',`Saved DSR amounts for ${displayDate(day.date)}`);
+          const message=el('p','Loading saved amounts…');message.className='card-status';
+          item.append(header,stamp,values,message);list.append(item);
+          const load=async()=>{
+            try{
+              const {day:saved}=await this.request(`/days/detail?date=${encodeURIComponent(day.date)}`) as {day:SavedDay};
+              if(request!==this.historyRequest)return;
+              if(saved.version!==day.version)throw new Error('This day changed. Open it to see the latest saved version.');
+              values.replaceChildren(...historySummary(saved).map(metric=>{const row=el('div');row.append(el('dt',metric.label),el('dd',metric.value));return row;}));
+              const status=historyStatus(saved);badge.textContent=status.label;badge.hidden=false;item.dataset.status=status.tone;
+              message.textContent='Saved DSR figures · Open the date for lines and checks.';
+            }catch(cause){
+              if(request!==this.historyRequest)return;
+              message.textContent=cause instanceof Error?cause.message:'Saved amounts could not be loaded.';
+              message.setAttribute('role','alert');const retry=button('Retry amounts',()=>{retry.remove();message.textContent='Loading saved amounts…';void load();});item.append(retry);
+            }
+          };
+          return load;
+        });
+        // Bound the reads for the existing 20-day page; never fetch the whole History.
+        void Promise.all(Array.from({length:Math.min(4,queue.length)},async()=>{while(queue.length&&request===this.historyRequest)await queue.shift()!();}));
+      };
       append(data.days);if(!data.days.length)this.content.append(el('p','No confirmed days yet. Read a DSR, review its lines, then tap Confirm day.'));
       let cursor=data.cursor;
       const more=button('Load more days',async()=>{more.disabled=true;try{const data=await this.request(`/days/history?cursor=${encodeURIComponent(cursor)}`);if(request!==this.historyRequest)return;append(data.days);cursor=data.cursor;more.hidden=!cursor;}catch{this.content.append(el('p','More days could not be loaded. Try again.'));}finally{more.disabled=false;}});more.hidden=!cursor;this.content.append(more);
     }catch(cause){if(request!==this.historyRequest)return;this.historyError(cause,()=>{void this.showHistory();});}
+  }
+  private async changeView(change:()=>void){
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&document.startViewTransition){
+      try{await document.startViewTransition(change).updateCallbackDone;}catch{change();}
+    }else change();
   }
   private historyError(cause:unknown,retry:()=>void){const message=el('p',cause instanceof Error?cause.message:'History could not be loaded. Try again.');message.className='form-error';message.setAttribute('role','alert');this.content.replaceChildren(message,button('Retry',retry));}
   private async openDay(date:string){
     const request=++this.historyRequest;this.content.replaceChildren(el('p','Loading saved day…'));
     try{
       const {day}=await this.request(`/days/detail?date=${encodeURIComponent(date)}`) as {day:SavedDay};if(request!==this.historyRequest)return;
-      const heading=el('h2',`Confirmed day — ${day.date}`);heading.tabIndex=-1;
+      await this.changeView(()=>{
+      if(request!==this.historyRequest)return;
+      const heading=el('h2',`Confirmed day — ${displayDate(day.date)}`);heading.tabIndex=-1;
       this.content.replaceChildren(heading,el('p',`Confirmed: ${time(day.confirmedAt)}`),button('Back to History',()=>{void this.showHistory();}));
       const checks=el('section');checks.append(el('h2','Matches / Differs'));
       for(const check of day.checks){const row=el('div');row.className='comparison-row';row.append(el('h3',check.title),el('p',checkWord(check.status)),el('p',`DSR: ${displayAmount(check.dsr)}`),el('p',`Supporting records: ${displayAmount(check.evidence)}`),el('p',`Difference: ${displayAmount(check.difference)}`));if(check.status==='Difference')row.classList.add('difference');checks.append(row);}
       this.content.append(checks);
       for(const doc of day.aiReading.documents){
-        const group=el('section');group.append(el('h2',`Photo ${doc.source} — ${doc.kind}`),el('p',`Document date: ${doc.date??'Not extracted'}`));
+        const group=el('section');group.append(el('h2',`Photo ${doc.source} — ${doc.kind}`),el('p',`Document date: ${displayDate(doc.date)}`));
         for(const section of [...sections,null]){
           const lines=day.lines.filter(line=>line.source===doc.source&&line.section===section);if(!lines.length)continue;
           group.append(el('h3',section??'Section not extracted'));const list=el('dl');
@@ -137,6 +191,7 @@ export class DayReview {
       const totals=el('section');totals.append(el('h2','Written totals'));if(!day.writtenTotals.length)totals.append(el('p','Not extracted'));
       for(const line of day.writtenTotals)totals.append(el('p',`Photo ${line.source} — ${line.label??'Not extracted'}: ${savedAmount(line)}`));this.content.append(totals);
       heading.focus();
+      });
     }catch(cause){if(request!==this.historyRequest)return;this.historyError(cause,()=>{void this.openDay(date);});}
   }
 }

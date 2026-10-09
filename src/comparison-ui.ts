@@ -1,3 +1,4 @@
+import { displayDate } from './date-display';
 import { displayAmount } from './extraction';
 import { moneyRoles, paymentMethods, type Comparison, type Choice } from './comparison';
 type Photo={url:string;file:File};
@@ -37,7 +38,7 @@ export function showComparison(root:HTMLElement,report:Comparison,photos:Photo[]
     row.append(sources(expense.sources));root.append(row);
   }
   const other=report.entries.filter(entry=>!entry.dsr&&['Advance received','Refund paid'].includes(entry.role));
-  if(other.length){root.append(element('h3','Advances and refunds — kept separate'));for(const entry of other)root.append(element('p',`${entry.role}: ${displayAmount(entry.value.amount)}${entry.value.unclear||entry.unclear?'?':''} · Photo ${entry.source} — ${entry.date===report.date?'selected day':entry.date===null?'Date not extracted; excluded from this day':`Different date ${entry.date}; excluded from this day`}`));}
+  if(other.length){root.append(element('h3','Advances and refunds — kept separate'));for(const entry of other)root.append(element('p',`${entry.role}: ${displayAmount(entry.value.amount)}${entry.value.unclear||entry.unclear?'?':''} · Photo ${entry.source} — ${entry.date===report.date?'selected day':entry.date===null?'Date not extracted; excluded from this day':`Different date ${displayDate(entry.date)}; excluded from this day`}`));}
   root.append(element('h3','Connections to check'),element('p','Add context only when you know it. Your answers are kept separate from the original AI reading and disappear when the page is refreshed. No new AI call is needed.'));
   for(const question of report.questions.filter(question=>question.id.endsWith(':document'))){root.append(element('p',`Photo ${question.id.split(':')[0]} — ${question.text}`),sources([question.id]));}
   for(const entry of report.entries.filter(entry=>!entry.dsr&&!['Written total','Cash balance'].includes(entry.role))){

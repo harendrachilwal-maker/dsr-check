@@ -44,8 +44,13 @@ const detail=httpAction(async(ctx,request)=>{
   const day=await ctx.runQuery(internal.days.detail,{scope,date});
   return day?reply({day}):reply({error:'No saved day found for this date.'},404);
 });
+const latest=httpAction(async ctx=>{
+  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
+  try{return reply({day:await ctx.runQuery(internal.days.latest,{scope})});}
+  catch{return reply({error:'Your last confirmed day could not be loaded. Try again.'},400);}
+});
 export function registerDayRoutes(http:HttpRouter){
-  for(const [path,method,handler] of [['/days/confirm','POST',confirm],['/days/history','GET',history],['/days/detail','GET',detail]] as const){
+  for(const [path,method,handler] of [['/days/confirm','POST',confirm],['/days/history','GET',history],['/days/detail','GET',detail],['/days/latest','GET',latest]] as const){
     http.route({path,method,handler});
     http.route({path,method:'OPTIONS',handler:httpAction(async()=>new Response(null,{status:204,headers}))});
   }

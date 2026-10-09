@@ -1,7 +1,7 @@
 import { internalMutation, internalQuery } from './_generated/server';
 import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
-import { daySnapshot, savedDay, historyResult } from './dayValidators';
+import { daySnapshot, savedDay, historyResult, dayReference } from './dayValidators';
 
 export const confirm=internalMutation({
   args:{scope:v.string(),snapshot:daySnapshot,expectedVersion:v.union(v.id('confirmedVersions'),v.null())},
@@ -22,6 +22,13 @@ export const history=internalQuery({
   handler:async(ctx,{scope,paginationOpts})=>{
     const result=await ctx.db.query('confirmedDays').withIndex('by_scope_date',q=>q.eq('scope',scope)).order('desc').paginate(paginationOpts);
     return {days:result.page.map(day=>({date:day.date,confirmedAt:day.confirmedAt,version:day.version})),cursor:result.isDone?null:result.continueCursor};
+  },
+});
+export const latest=internalQuery({
+  args:{scope:v.string()},returns:v.union(dayReference,v.null()),
+  handler:async(ctx,{scope})=>{
+    const day=await ctx.db.query('confirmedDays').withIndex('by_scope_confirmedAt',q=>q.eq('scope',scope)).order('desc').first();
+    return day?{date:day.date,confirmedAt:day.confirmedAt,version:day.version}:null;
   },
 });
 export const detail=internalQuery({

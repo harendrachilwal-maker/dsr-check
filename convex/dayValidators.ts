@@ -15,4 +15,5 @@ const reading=v.object({date:v.string(),documents:v.array(document),contexts:v.a
 const snapshotFields={date:v.string(),lines:v.array(savedLine),writtenTotals:v.array(savedLine),checks:v.array(check),aiReading:reading,aiAnswerText:v.string(),choices:v.array(choice)};
 export const daySnapshot=v.object(snapshotFields);
 export const savedDay=v.object({...snapshotFields,confirmedAt:v.number(),version:v.id('confirmedVersions')});
-export const historyResult=v.object({days:v.array(v.object({date:v.string(),confirmedAt:v.number(),version:v.id('confirmedVersions')})),cursor:text});
+export const dayReference=v.object({date:v.string(),confirmedAt:v.number(),version:v.id('confirmedVersions')});
+export const historyResult=v.object({days:v.array(dayReference),cursor:text});

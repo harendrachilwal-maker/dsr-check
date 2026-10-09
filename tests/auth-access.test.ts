@@ -7,7 +7,7 @@ test('signed-out and old browser-key requests cannot scan, correct, confirm or r
  const t=convexTest(schema,modules),provider=vi.fn();vi.stubGlobal('fetch',provider);
  try{
   for(const token of ['',`Bearer ${'a'.repeat(64)}`,'Bearer forged-token']){
-   for(const [path,method] of [['/extract','POST'],['/compare','POST'],['/records','POST'],['/days/confirm','POST'],['/days/history','GET'],[`/days/detail?date=${date}`,'GET']]){
+   for(const [path,method] of [['/extract','POST'],['/compare','POST'],['/records','POST'],['/days/confirm','POST'],['/days/history','GET'],['/days/latest','GET'],[`/days/detail?date=${date}`,'GET']]){
     const response=await t.fetch(path,{method,headers:{Authorization:token}});expect(response.status).toBe(401);
    }
   }

@@ -1,3 +1,4 @@
+import { displayDate } from '../../src/date-display';
 import {expect,test} from './manager-fixture';
 // All document contents below are fabricated. Provider replies are simulated, not paid calls.
 const dsrDate='2026-11-02';
@@ -19,10 +20,10 @@ for(const width of [320,390]){
   await page.locator('#photo').setInputFiles([file('extra1'),file('extra2'),file('extra3')]);await expect(page.getByRole('alert')).toHaveText('Choose up to six DSR and bill photos.');await expect(page.getByText('4 of 6 photos · 10 MB total maximum')).toBeVisible();
   await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByRole('alert')).toHaveText('Busy right now. Try again in a few minutes.');await expect(page.getByText('fabricated-guest.png',{exact:true})).toBeVisible();
   fail=false;await page.getByRole('button',{name:'Retry Scanning'}).click();
-  await expect(page.getByRole('heading',{name:`Extracted Digital DSR — ${dsrDate}`})).toBeFocused();await expect(page.locator('.dsr-document')).toHaveCount(4);
+  await expect(page.getByRole('heading',{name:`Extracted Digital DSR — ${displayDate(dsrDate)}`})).toBeFocused();await expect(page.locator('.dsr-document')).toHaveCount(4);
   const sheet=page.locator('.dsr-document').nth(0),guest=page.locator('.dsr-document').nth(1),expense=page.locator('.dsr-document').nth(3);
   await expect(sheet.getByText('Not extracted',{exact:true})).toBeVisible();await expect(sheet.getByText('Unclear — check the original DSR.',{exact:true})).toBeVisible();await expect(sheet.getByText('₹0',{exact:true})).toBeVisible();await expect(sheet.getByText('₹50',{exact:true})).toBeVisible();await expect(sheet).not.toContainText('₹450');
-  await expect(guest).toContainText('Date not extracted — check the original.');await expect(expense).toContainText('Different date: 2026-11-01 — not this day’s record.');await expect(page.locator('#results')).not.toContainText('999999');await expect(page.locator('#results')).not.toContainText('2099');await expect(page.locator('.section-total')).toHaveCount(0);
+  await expect(guest).toContainText('Date not extracted — check the original.');await expect(expense).toContainText('Different date: 1 Nov 2026 — not this day’s record.');await expect(page.locator('#results')).not.toContainText('999999');await expect(page.locator('#results')).not.toContainText('2099');await expect(page.locator('.section-total')).toHaveCount(0);
   expect(requests[0]).toEqual(requests[1]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`.test-results/split-date-results-${width}.png`,fullPage:true});
   await page.getByRole('button',{name:'Remove photo 4: fabricated-expense.png',exact:true}).click();await expect(page.locator('#results')).toBeHidden();expect(await page.locator('#raw').textContent()).toBe('');
  });
@@ -32,7 +33,7 @@ for(const width of [320,390]){
   await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByRole('alert')).toHaveText('Choose the reporting date first.');expect(calls).toBe(0);
   await page.getByLabel('Reporting date',{exact:true}).fill(dsrDate);await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByRole('alert')).toHaveText('Add the DSR photo before scanning.');expect(calls).toBe(0);
   await page.locator('#photo').setInputFiles({name:'fabricated-month.png',mimeType:'image/png',buffer:await page.screenshot()});await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();
-  await expect(page.getByRole('heading',{name:`Extracted Digital DSR — ${dsrDate}`})).toBeVisible();await expect(page.locator('#status')).toHaveText('DSR row not extracted for this date. Check the selected date or upload a clearer DSR photo.');expect(await page.locator('dd').count()).toBe(0);
+  await expect(page.getByRole('heading',{name:`Extracted Digital DSR — ${displayDate(dsrDate)}`})).toBeVisible();await expect(page.locator('#status')).toHaveText('DSR row not extracted for this date. Check the selected date or upload a clearer DSR photo.');expect(await page.locator('dd').count()).toBe(0);
   await page.getByLabel('Reporting date',{exact:true}).fill('2026-11-03');await expect(page.locator('#results')).toBeHidden();expect(await page.locator('#raw').textContent()).toBe('');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`.test-results/split-date-after-date-change-${width}.png`,fullPage:true});
  });
@@ -46,7 +47,7 @@ test('latest raw dated reading replaces amounts; wrong dates clear old results',
   return route.fulfill({contentType:'application/json',body:JSON.stringify({mode:'dated',extracted:{lines:[old]},totals:[{section:'Sales',total:999999}],raw:reply})});
  });
  await page.locator('#photo').setInputFiles({name:'fabricated-latest.png',mimeType:'image/png',buffer:await page.screenshot()});await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByText('Old label',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByText('Old label',{exact:true})).toHaveCount(0);await expect(page.getByRole('heading',{name:'Extracted Digital DSR — 2026-11-02'})).toBeVisible();
+ await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByText('Old label',{exact:true})).toHaveCount(0);await expect(page.getByRole('heading',{name:'Extracted Digital DSR — 2 Nov 2026'})).toBeVisible();
  await expect(page.getByText('₹12,345?',{exact:true})).toBeVisible();await expect(page.getByText('Calculated total of entries: ₹5,350',{exact:true})).toBeVisible();await expect(page.locator('#results')).not.toContainText('€');await expect(page.locator('#results')).not.toContainText('999999');
  await page.getByText('View raw AI response',{exact:true}).click();expect(JSON.parse((JSON.parse(await page.locator('#raw').innerText())).output[0].content[0].text).documents).toEqual([latest]);
  await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();await expect(page.getByRole('alert')).toHaveText('Busy right now. Try again in a few minutes.');await expect(page.locator('#results')).toBeHidden();expect(await page.locator('dd').count()).toBe(0);expect(await page.locator('#raw').textContent()).toBe('');

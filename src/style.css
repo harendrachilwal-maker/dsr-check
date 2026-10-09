@@ -78,3 +78,63 @@ nav [aria-current="page"] { font-weight:700; }
 #login-root form { display: grid; gap: 16px; }
 #login-root input { width: 100%; min-height: 48px; padding: 12px; font: inherit; box-sizing: border-box; }
 @media(max-width: 340px) { #login-root { padding: 16px; } }
+/* Manager home and saved History: calm finance surfaces, clear figures, one font. */
+#app { max-width: 720px; padding-top: 20px; }
+#app > nav { background: #E9EEEF; border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 32px; }
+#app > nav button { border: 0; border-radius: 8px; color: #405453; }
+#app > nav [aria-current="page"] { background: #FFFFFF; color: #17212F; }
+.home-header h1 { text-align: left; font-size: 32px; line-height: 1.2; letter-spacing: -.03em; }
+.home-header p { text-align: left; color: #405453; margin: 16px 0 28px; }
+#manager-page > label { margin-top: 0; }
+#manager-page > input[type="date"] { background: #FFFFFF; border-color: #CCD6D5; margin-bottom: 24px; padding: 12px; }
+.upload-card { background: #FFFFFF; border: 1px solid #DCE4E2; border-radius: 16px; padding: 20px; margin-bottom: 16px; animation: finance-fade 180ms ease-out; }
+.upload-card h2 { margin: 0 0 12px; }
+.upload-card p { color: #405453; margin: 8px 0 20px; }
+.upload-card > button { width: 100%; border-color: #CCD6D5; background: #F3F6F5; font-weight: 700; }
+.upload-card .photo-row { margin: 20px 0 0; }
+#manager-page > .actions { margin-top: 8px; padding-top: 8px; }
+#history-page > h1 { text-align: left; font-size: 32px; letter-spacing: -.03em; }
+#history-page > p { color: #405453; margin: 16px 0 28px; }
+.history-list { margin: 0; display: grid; gap: 20px; }
+.history-list .history-card { border: 1px solid #DCE4E2; border-radius: 16px; background: #FFFFFF; padding: 20px; animation: finance-fade 180ms ease-out; }
+.history-card .day-open { text-align: left; width: 100%; font-size: 20px; border: 0; padding: 0; background: transparent; color: #17212F; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
+.history-card .day-stamp { color: #405453; font-size: 14px; margin: 4px 0 24px; }
+.history-card .day-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px 16px; margin: 0; }
+.day-metrics > div { border: 0; padding: 0; min-width: 0; }
+.day-metrics > div:last-child { grid-column: 1 / -1; border-top: 1px solid #DCE4E2; padding-top: 20px; }
+.day-metrics dt { font-size: 14px; color: #405453; font-weight: 400; }
+.day-metrics dd { font-size: 24px; line-height: 1.25; font-weight: 700; letter-spacing: -.02em; margin-top: 8px; overflow-wrap: anywhere; }
+.day-metrics dd:empty { display: none; }
+.history-card .card-status { color: #405453; font-size: 14px; margin: 20px 0 0; }
+.history-content { view-transition-name: saved-day; }
+::view-transition-old(saved-day) { animation: finance-out 160ms ease-in both; }
+::view-transition-new(saved-day) { animation: finance-fade 200ms ease-out both; }
+@keyframes finance-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes finance-out { to { opacity: 0; } }
+@media(min-width: 700px) { .upload-card { padding: 24px; } .day-metrics dd { font-size: 32px; } }
+@media(prefers-reduced-motion: reduce) { .upload-card, .history-card, ::view-transition-old(saved-day), ::view-transition-new(saved-day) { animation: none !important; } }
+.report-date-field { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; max-width: 100%; min-width: 0; min-height: 48px; margin-bottom: 24px; padding: 12px; border: 1px solid #CCD6D5; border-radius: 8px; background: #FFFFFF; overflow: hidden; }
+.report-date-field input[type="date"] { position: absolute; inset: 0; display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+.report-date-field span, .report-date-field svg { pointer-events: none; }
+.report-date-field svg { flex: none; }
+.report-date-field:focus-within { outline: 2px solid #17212F; outline-offset: 4px; }
+.report-date-field:has(input:disabled) { opacity: .7; }
+/* Compact upload previews and saved-state colours, confined to Home and History. */
+#manager-page { min-width: 0; }
+#last-confirmed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; color: #405453; margin: 0 0 20px; }
+#last-confirmed button { font-size: 14px; }
+.upload-card .photo-row { display: grid; grid-template-columns: 56px minmax(0,1fr); align-items: center; gap: 8px 12px; }
+.upload-card .photo-row img { width: 56px; height: 64px; margin: 0; border: 1px solid #DCE4E2; border-radius: 8px; background: #F8FAFC; object-fit: contain; }
+.upload-card .photo-row p { margin: 0; font-size: 14px; }
+.upload-card .photo-row button { grid-column: 2; justify-self: start; font-size: 14px; padding: 8px 12px; border-color: #CCD6D5; }
+.history-month + .history-month { margin-top: 32px; }
+.history-month > h2 { margin: 0 0 16px; }
+.day-card-header { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.history-card .day-open { width: auto; flex: 1 1 auto; }
+.day-badge { flex: none; border-radius: 6px; padding: 4px 8px; font-size: 14px; line-height: 1.5; font-weight: 700; }
+.history-card[data-status="matches"] { border-left: 2px solid #276749; }
+.history-card[data-status="matches"] .day-badge { color: #276749; background: #ECF5EF; }
+.history-card[data-status="check"] { border-left: 2px solid #8A5A00; }
+.history-card[data-status="check"] .day-badge { color: #8A5A00; background: #FFF7E6; }
+.history-card[data-status="incomplete"] { border-left: 2px solid #55616B; }
+.history-card[data-status="incomplete"] .day-badge { color: #55616B; background: #EEF1F3; }

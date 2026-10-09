@@ -674,3 +674,96 @@ https://60fps.design/appsites/x-money-card-envelop-reveal-animation
 - Do not ask users to enter information again when it can be reliably extracted from existing records.
 - Merge screens when they serve the same job, and avoid unnecessary navigation.
 - Keep the optional web dashboard available without making it a mandatory part of the owner's daily reporting routine.
+
+### 6. Clear everyday screens
+
+- One primary action per screen.
+- Show numbers before decoration.
+- Make AI-read and manager-confirmed values visibly different.
+- Keep key actions within one-handed reach on mobile.
+- Use plain words: "Cash difference" and "2 expenses need checking".
+- Keep the most important figures visible. Put details behind a tap.
+- No illustrations, emojis or bright colours.
+- Give helpful feedback: "Photos added. Now check the numbers."
+
+**References:** Linear for hierarchy; Stripe Dashboard for financial numbers; Monzo for approachable money UI.
+
+## 7. Approved revision — manager Home and History (development only, 2026-10-09)
+
+### Overview
+
+This approved revision applies only to the manager Home upload surface, its two-tab navigation, and saved History cards. It records the code-led direction: Stripe's clear large saved numbers, Mercury's calm finance colours, and Linear's spacing with one font. Existing locked design, wording and rules for login, reading, correction, confirmation and saving retain their authority outside this scope. This revision authorises no deployment or financial/product rule change.
+
+### Colors
+
+Keep the original dark slate text (#17212F), cool off-white canvas (#F8FAFC), blue scan action (#1D4ED8), white action text (#FFFFFF) and error red (#B42318). Add muted green-grey supporting text (#405453), cool grey navigation background (#E9EEEF), white cards and date input (#FFFFFF), soft date/button borders (#CCD6D5), pale upload-button fill (#F3F6F5), and quiet card borders/dividers (#DCE4E2) for these surfaces only.
+
+### Typography
+
+Use Inter, with sans-serif fallback, throughout. Home and History headings are left aligned, bold (700), 32px, with -0.03em spacing; Home line height is 1.2 and History inherits 1.15. Card dates and upload section titles are bold 20px. Saved numbers are bold 24px on phones, 32px from 700px viewport width, line height 1.25 and -0.02em spacing, with aligned numeric widths. Metric labels, confirmation timestamps and card status text are 14px; labels use regular (400) weight. Body and buttons remain 16px. The original 40px/20px/16px scale remains locked on unaffected screens.
+
+### Layout
+
+The manager app has a centred single column capped at 720px, with 20px top padding and 24px horizontal padding (16px at widths up to 350px). Home has a left aligned headline, date input, separate DSR and other-photo panels, and the existing scan action. Upload panels have 20px padding, increasing to 24px at 700px; saved cards retain 20px padding. Upload panels are separated by 16px; History cards by 20px. Each saved card has two equal metric columns with 24px row gaps and 16px column gaps; expenses span both columns with a quiet divider. Date controls remain at least 48px high.
+
+### Elevation & Depth
+
+These surfaces use white panels and subtle borders, with no added shadows. The selected navigation tab is white against the grey navigation tray.
+
+### Shapes
+
+Cards have gently rounded 16px corners. The navigation tray uses 12px corners; its buttons and date control retain 8px corners.
+
+### Components
+
+- **Navigation:** Upload DSR and History retain their existing actions; the selected tab has dark slate bold text on white, and other tab text is muted green-grey. Keyboard focus keeps the existing visible dark outline.
+- **Home panels:** Keep the two existing upload actions and selected-photo controls. Their buttons are full-width with pale fill and soft borders; Start AI Scanning retains the original blue treatment. Existing disabled and error states remain visible.
+- **Saved-day card:** Open the underlined date to see the existing saved lines and checks. Show the saved confirmation timestamp in IST and five amounts: Room revenue, Food revenue, Guest cash, Guest UPI and Expenses. Each amount comes only from that saved report's `checks.dsr` value; supporting-evidence values are not summary inputs and the interface does not recalculate saved reports.
+- **History states:** Show loading text while saved days or amounts are loading, an honest empty state when no confirmed days exist, and retry controls on errors. Missing amounts read “Not extracted”; a saved zero reads ₹0. A changed saved version asks the manager to open the date rather than showing mismatched amounts. Existing confirmation and replacement prompts retain their behaviour.
+- **Motion:** Cards use a small 180ms ease-out fade with a 4px rise. Saved-day changes use a 160ms outgoing fade and 200ms incoming fade where browser view transitions are supported. Reduced-motion preference disables these animations; unsupported browsers update directly.
+
+### Do's and Don'ts
+
+- Do keep numbers grounded in the saved DSR, with missing values distinct from zero.
+- Do preserve original lines, checks and correction history when opening a date.
+- Do use this palette and size extension only on the approved Home and History surfaces.
+- Do preserve login, reading, correction, confirm/save and financial permissions.
+- Don't infer owner approval, evidence verification or WhatsApp delivery from a saved card.
+
+**Recorded evidence:** Development screenshots `.test-results/redesign-home-{320,390,1280}.png` and `.test-results/redesign-history-{320,390,1280}.png`. These document browser-width presentation; they do not prove real-phone use, production operation or WhatsApp behaviour. No generated raster assets were added.
+
+
+## 8. Approved follow-up — manager Home and History (development only, 2026-10-10)
+
+### Overview
+
+This owner-approved extension follows the existing section 7 direction and section 6 Principles. Scope is limited to numbered Home steps, compact original-photo previews, Last confirmed, bounded readable date selection, History month/year groups and saved-check status cues. Login, AI reading, corrections, confirmation/replacement, financial permissions and all other screens retain their existing behaviour and locked design. No global design rewrite is authorised.
+
+### Colors
+
+Keep Inter and the existing base palette. Add calm semantic colours only for saved-check badges and their matching card left edges: Matches uses muted green (#276749) on pale green (#ECF5EF); Check uses muted amber (#8A5A00) on pale amber (#FFF7E6); Not enough info uses slate-grey (#55616B) on pale grey (#EEF1F3). These cues describe saved checks, not owner approval or WhatsApp delivery.
+
+### Typography
+
+Keep all existing type sizes. Last confirmed, thumbnail filenames, Remove photo and badges use 14px; badges are bold (700), line height 1.5. Numbered step labels read exactly “1 Reporting date”, “2 DSR photos” and “3 Other photos”; the date label retains 16px bold and the photo headings retain 20px bold. Month/year headings retain 20px bold. Display dates as “10 Oct 2026” (day without a leading zero, short English month and four-digit year); month groups use full month and year, such as “October 2026”. Confirmation timestamps retain IST. Stored and submitted ISO dates stay unchanged.
+
+### Layout
+
+The Reporting date control is bounded to its available column width, with min-width 0 and minimum height 48px; white fill, soft border, 8px corners and 12px padding remain. The native date input remains interactive inside the visible formatted field; focus surrounds the field with the existing 2px slate outline, offset 4px. Original-photo preview rows use a 56px thumbnail column plus a flexible filename column, with 8px row and 12px column gaps. Images are 56×64px, contained without cropping, with 8px corners and the existing soft border. Remove photo remains beside/below the filename in the second column with a minimum 48px tap target. Month groups have 32px separation and 16px below their headings. Card date/badge headers wrap with 4px row and 12px column gaps.
+
+### Shapes
+
+Status badges use 6px corners and 4px vertical / 8px horizontal padding; status card left edges are 2px. Existing panel corners, transitions, reduced-motion support and tap sizes remain unchanged.
+
+### Components
+
+- **Original-photo previews:** Render the existing original blob-photo URL at thumbnail size with filename and Remove photo controls. This is presentation only: it does not alter the AI input bytes or add stored photos.
+- **Last confirmed:** The top Home line shows the document date associated with the signed-in account's most recent `confirmedAt`, not the greatest document date. It refreshes when Upload DSR opens and after successful confirmation. Show “Last confirmed: Loading…”, “Last confirmed: None yet”, or “Last confirmed: Could not load.” with Retry as appropriate; do not guess a date. The backend derives the signed-in scope before reading its latest confirmation.
+- **History month/year groups:** Group the existing descending document-date results by month and year, preserving pagination. A month crossing a page boundary keeps one group; retain bounded detail reads and existing open-date lines/checks.
+- **Saved-check statuses:** Use only persisted checks. A missing required check or any “Not enough information” yields grey “Not enough info”; otherwise any “Difference” yields amber “Check”; all six saved checks matched yields green “Matches”. The six checks cover Room charges, Food charges, Guest cash received, Guest UPI received, Expenses and OTA money received. Keep badges hidden until the saved detail and version are verified; failed or stale reads get no invented badge. Amounts still read only saved `checks.dsr`, with missing values distinct from zero.
+
+### Do's and Don'ts
+
+Do keep the selected photo's original contents, saved history and account isolation intact. Do communicate statuses with words as well as calm colours. Don't change financial meaning, infer approval, replace unavailable figures or extend this revision to other screens.
+
+**Recorded evidence:** Final development captures `.test-results/home-steps-390.png`, `.test-results/history-months-390.png`, `.test-results/redesign-home-320.png`, `.test-results/redesign-home-1280.png`, `.test-results/redesign-history-320.png` and `.test-results/redesign-history-1280.png`. Existing `.test-results/home-history-*-output.txt` reports record 59 unit tests, 21 phone-width browser tests, one WebKit date test and a passing build. These are development/browser checks, not real-phone, production or WhatsApp verification. No deployment, production operation, paid call, commit or progress change is part of this documentation handoff; no generated raster asset was added.

@@ -43,5 +43,5 @@ test('other-date advances and refunds show their exclusion beside the amount',as
  const meta=[...contexts,{...contexts[0],source:6,role:'Advance received',unclear:true}];const raw=makeRaw(docs,meta);
  await page.route('**/extract',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({mode:'compare',raw,comparison:buildComparison(comparisonReadingFromRaw(raw,date,[1,2,3,4,5,6],[1]))})}));
  const buffer=await page.screenshot(),file=(number:number)=>({name:`fabricated-${number}.png`,mimeType:'image/png',buffer});await page.locator('#photo').setInputFiles(file(1));await page.locator('#other-photo').setInputFiles([file(2),file(3),file(4),file(5),file(6)]);await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();
- await expect(page.getByText('Advance received: ₹900? · Photo 6 — Different date 2026-11-01; excluded from this day',{exact:true})).toBeVisible();
+ await expect(page.getByText('Advance received: ₹900? · Photo 6 — Different date 1 Nov 2026; excluded from this day',{exact:true})).toBeVisible();
 });

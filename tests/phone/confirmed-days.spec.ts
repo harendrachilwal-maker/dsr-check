@@ -1,3 +1,4 @@
+import { displayDate } from '../../src/date-display';
 import { expect, test } from './manager-fixture';
 import { comparisonReadingFromRaw, buildComparison } from '../../src/comparison';
 import { makeRaw, comparisonDate as date } from '../comparison-fixture';
@@ -15,24 +16,24 @@ for(const width of [320,390])test(`correct, confirm and reopen a saved day; repl
  await row.getByRole('button',{name:'Save Correction',exact:true}).click();await expect(page.getByText('Correction saved.',{exact:true})).toBeVisible();
  const changed=page.locator('.dsr-line').filter({has:page.locator('dt').filter({hasText:/^Painting checked$/})});await expect(changed).toContainText('₹6,100');await expect(changed).toContainText('AI value: ₹6,000');
  const check=page.locator('#comparison .comparison-row').filter({has:page.getByRole('heading',{name:'Expenses',exact:true})});await expect(check).toContainText('Difference');expect(calls).toBe(1);
- await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText(`Day confirmed and saved — ${date}.`,{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:date,exact:true}).click();
+ await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText(`Day confirmed and saved — ${displayDate(date)}.`,{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:displayDate(date),exact:true}).click();
  const history=page.locator('#history-page');await expect(history).toContainText('Corrected value: ₹6,100');await expect(history).toContainText('AI value: ₹6,000');await expect(history).toContainText('Differs');await expect(history).toContainText('Written totals');
- await expect(page.getByRole('heading',{name:`Confirmed day — ${date}`,exact:true})).toBeFocused();await page.keyboard.press('Tab');await expect(page.getByRole('button',{name:'Back to History',exact:true})).toBeFocused();
+ await expect(page.getByRole('heading',{name:`Confirmed day — ${displayDate(date)}`,exact:true})).toBeFocused();await page.keyboard.press('Tab');await expect(page.getByRole('button',{name:'Back to History',exact:true})).toBeFocused();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.reload();await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:date,exact:true}).click();await expect(history).toContainText('Corrected label: Painting checked');
+ await page.reload();await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:displayDate(date),exact:true}).click();await expect(history).toContainText('Corrected label: Painting checked');
  await page.getByRole('button',{name:'Upload DSR',exact:true}).click();await page.getByLabel('Reporting date',{exact:true}).fill(date);
  await page.locator('#photo').setInputFiles(file(1));await page.locator('#other-photo').setInputFiles([file(2),file(3),file(4),file(5)]);await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();
  page.once('dialog',async dialog=>{expect(dialog.message()).toBe('Replace the saved day?');await dialog.dismiss();});
  await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText('Saved day kept. Your current corrections are still here.',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:date,exact:true}).click();await expect(history).toContainText('Corrected value: ₹6,100');
+ await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:displayDate(date),exact:true}).click();await expect(history).toContainText('Corrected value: ₹6,100');
  await page.getByRole('button',{name:'Upload DSR',exact:true}).click();page.once('dialog',async dialog=>{expect(dialog.message()).toBe('Replace the saved day?');await dialog.accept();});
- await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText(`Day confirmed and saved — ${date}.`,{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:date,exact:true}).click();await expect(history).not.toContainText('Corrected value: ₹6,100');
+ await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText(`Day confirmed and saved — ${displayDate(date)}.`,{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:displayDate(date),exact:true}).click();await expect(history).not.toContainText('Corrected value: ₹6,100');
  if(width===320){
   await page.getByRole('button',{name:'Upload DSR',exact:true}).click();await row.getByRole('button',{name:'Correct',exact:true}).click();await row.getByLabel('Amount (₹)',{exact:true}).fill('');await row.getByRole('button',{name:'Save Correction',exact:true}).click();await expect(row.locator('dd')).toHaveText('Not extracted');
-  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText(`Day confirmed and saved — ${date}.`,{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:date,exact:true}).click();await expect(history).toContainText('Corrected value: Not extracted');await expect(history).not.toContainText('Not extracted?');
+  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Confirm day',exact:true}).click();await expect(page.getByText(`Day confirmed and saved — ${displayDate(date)}.`,{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'History',exact:true}).click();await page.getByRole('button',{name:displayDate(date),exact:true}).click();await expect(history).toContainText('Corrected value: Not extracted');await expect(history).not.toContainText('Not extracted?');
  }
  await page.screenshot({path:`.test-results/history-${width}.png`,fullPage:true});
 });

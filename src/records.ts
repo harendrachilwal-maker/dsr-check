@@ -1,3 +1,4 @@
+import { displayDate } from './date-display';
 import { imageType, MAX_BYTES } from './extraction';
 import { recordKinds, recordType, validDate } from './daily';
 export function setupRecords(date: HTMLInputElement, endpoint: string, busy: (active: boolean) => void) {
@@ -12,7 +13,7 @@ export function setupRecords(date: HTMLInputElement, endpoint: string, busy: (ac
     const list = get('record-list'); list.replaceChildren();
     pending.forEach((item,index) => {
       const row = document.createElement('div'); row.className='photo-row';
-      const text=document.createElement('p'); text.textContent=`${item.file.name} · ${item.kind} · ${item.date} · ${item.uploaded ? 'Uploaded — not checked' : 'Selected — not uploaded'}`;
+      const text=document.createElement('p'); text.textContent=`${item.file.name} · ${item.kind} · ${displayDate(item.date)} · ${item.uploaded ? 'Uploaded — not checked' : 'Selected — not uploaded'}`;
       row.append(text);
       if (!item.uploaded) { const remove=document.createElement('button'); remove.type='button';remove.className='secondary';remove.textContent='Remove record';remove.setAttribute('aria-label',`Remove record: ${item.file.name}`);remove.disabled=active||locked;remove.onclick=()=>{pending.splice(index,1);render();};row.append(remove); }
       list.append(row);

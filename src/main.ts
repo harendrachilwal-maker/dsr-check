@@ -1,3 +1,4 @@
+import { displayDate } from './date-display';
 import { authenticatedFetch } from './session';
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/700.css';
@@ -10,11 +11,15 @@ import { encodeImage, MAX_PHOTOS, SIZE_ERROR } from './uploads';
 import { applyCorrections, type Correction } from './confirmed-day';
 import { DayReview, type ReviewState } from './day-review-ui';
 const app=document.querySelector<HTMLElement>('#app')!;
-app.innerHTML=`<header><h1>Turn Your Paper DSR into a Digital DSR</h1><p>Choose the reporting date, add the DSR photos, then add guest bills, UPI records and expense photos.</p></header><label for="report-date">Reporting date</label><input id="report-date" type="date"><section aria-label="DSR photos"><h2>DSR photos</h2><input id="photo" type="file" aria-label="Choose DSR photos" accept="image/jpeg,image/png,image/webp" multiple hidden><button id="add-dsr" class="secondary" type="button">Add DSR Photos</button><div id="dsr-photos"></div></section><section aria-label="Other photos"><h2>Other photos</h2><p>Guest bills, food bills, UPI records and expenses.</p><input id="other-photo" type="file" aria-label="Choose other photos" accept="image/jpeg,image/png,image/webp" multiple hidden><button id="add-other" class="secondary" type="button">Add Other Photos</button><div id="other-photos"></div></section><section id="selected" hidden aria-label="Selected photos"><p id="selection-count"></p></section><section id="results" hidden aria-label="Extracted Digital DSR"><h2 id="result-heading" tabindex="-1">Extracted Digital DSR</h2><p>AI-extracted figures. Check them against your original photos.</p><div id="comparison" translate="no"></div><div id="amounts" translate="no"></div><details><summary>View raw AI response</summary><pre id="raw" translate="no"></pre></details></section><p id="status" role="status" aria-live="polite"></p><p id="error" role="alert" hidden></p><div class="actions"><button id="primary" type="button">Start AI Scanning</button></div>`;
+app.innerHTML=`<p id="last-confirmed" role="status" aria-live="polite">Last confirmed: Loading…</p><header><h1>Turn Your Paper DSR into a Digital DSR</h1><p>Choose the reporting date, add the DSR photos, then add guest bills, UPI records and expense photos.</p></header><label for="report-date">1 Reporting date</label><div class="report-date-field"><span id="report-date-display" aria-live="polite">Choose a date</span><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><input id="report-date" type="date" aria-label="Reporting date" aria-describedby="report-date-display"></div><section aria-label="DSR photos"><h2>2 DSR photos</h2><input id="photo" type="file" aria-label="Choose DSR photos" accept="image/jpeg,image/png,image/webp" multiple hidden><button id="add-dsr" class="secondary" type="button">Add DSR Photos</button><div id="dsr-photos"></div></section><section aria-label="Other photos"><h2>3 Other photos</h2><p>Guest bills, food bills, UPI records and expenses.</p><input id="other-photo" type="file" aria-label="Choose other photos" accept="image/jpeg,image/png,image/webp" multiple hidden><button id="add-other" class="secondary" type="button">Add Other Photos</button><div id="other-photos"></div></section><section id="selected" hidden aria-label="Selected photos"><p id="selection-count"></p></section><section id="results" hidden aria-label="Extracted Digital DSR"><h2 id="result-heading" tabindex="-1">Extracted Digital DSR</h2><p>AI-extracted figures. Check them against your original photos.</p><div id="comparison" translate="no"></div><div id="amounts" translate="no"></div><details><summary>View raw AI response</summary><pre id="raw" translate="no"></pre></details></section><p id="status" role="status" aria-live="polite"></p><p id="error" role="alert" hidden></p><div class="actions"><button id="primary" type="button">Start AI Scanning</button></div>`;
+app.querySelector('header')!.classList.add('home-header');
+for(const section of app.querySelectorAll<HTMLElement>('section[aria-label="DSR photos"], section[aria-label="Other photos"]'))section.classList.add('upload-card');
 const get=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const input=get<HTMLInputElement>('photo'),otherInput=get<HTMLInputElement>('other-photo'),date=get<HTMLInputElement>('report-date'),primary=get<HTMLButtonElement>('primary');
 type Photo={file:File;url:string;role:'DSR'|'Other'};
-date.onchange=()=>{clearResults();error();};
+const showDate=()=>{get('report-date-display').textContent=displayDate(date.value,'Choose a date');};
+date.oninput=showDate;date.onchange=()=>{showDate();clearResults();error();};
+date.onclick=()=>{if(!date.disabled)date.showPicker?.();};
 let photos:Photo[]=[];let scanning=false;let selecting=false;
 let comparisonState:ReviewState|null=null;
 const review=new DayReview({endpoint:import.meta.env.VITE_CONVEX_SITE_URL,state:()=>comparisonState,photos:()=>photos,busy:()=>scanning||selecting,refreshControls:renderPhotos,apply:applyLineCorrections});
@@ -99,13 +104,13 @@ primary.onclick=async()=>{
    else reading=datedDocumentsFromRawResponse(data.raw,date.value,sources,dsrSources);
   }catch{throw new Error(BUSY);}
   const amounts=get('amounts');amounts.replaceChildren();
-  get('result-heading').textContent=`Extracted Digital DSR — ${reading.date??'Date not extracted'}`;
+  get('result-heading').textContent=`Extracted Digital DSR — ${displayDate(reading.date,'Date not extracted')}`;
   if(!reading.documents.some(doc=>doc.kind==='Daily sheet'||doc.kind==='Handwritten DSR')){const note=document.createElement('p');note.textContent='DSR not identified. Add a clear DSR photo.';amounts.append(note);}
   for(const doc of reading.documents){
    const container=document.createElement('section');container.className='dsr-document';
    const heading=document.createElement('h3');heading.textContent=`Photo ${doc.source} — ${doc.kind}`;container.append(heading);
    const filename=document.createElement('p');filename.textContent=photos[doc.source-1].file.name;container.append(filename);
-   const note=document.createElement('p');note.textContent=doc.date===null?'Date not extracted — check the original.':reading.date!==null&&doc.date!==reading.date?`Different date: ${doc.date} — not this day’s record.`:`Document date: ${doc.date}`;container.append(note);
+   const note=document.createElement('p');note.textContent=doc.date===null?'Date not extracted — check the original.':reading.date!==null&&doc.date!==reading.date?`Different date: ${displayDate(doc.date)} — not this day’s record.`:`Document date: ${displayDate(doc.date)}`;container.append(note);
    if(reading.date===null){const unmatched=document.createElement('p');unmatched.textContent='DSR date not extracted — this photo is not matched to a reporting day.';container.append(unmatched);}
    renderLines({lines:doc.lines},container,doc.kind==='Handwritten DSR'&&reading.date!==null,true,doc.source);amounts.append(container);
   }
@@ -143,6 +148,6 @@ async function applyLineCorrections(changes:Correction[]){
   if(!response.ok||JSON.stringify(data.comparison)!==JSON.stringify(buildComparison(effective,state.choices)))throw new Error('Your correction could not be checked. Try again.');
   state.corrections=changes;renderComparison(data.comparison);
   const amounts=get('amounts');amounts.replaceChildren();
-  for(const doc of effective.documents){const container=document.createElement('section');container.className='dsr-document';const heading=document.createElement('h3');heading.textContent=`Photo ${doc.source} — ${doc.kind}`;const name=document.createElement('p');name.textContent=photos[doc.source-1].file.name;const note=document.createElement('p');note.textContent=doc.date===null?'Date not extracted — check the original.':doc.date!==effective.date?`Different date: ${doc.date} — not this day’s record.`:`Document date: ${doc.date}`;container.append(heading,name,note);renderLines({lines:doc.lines},container,doc.kind==='Handwritten DSR',true,doc.source);amounts.append(container);}
+  for(const doc of effective.documents){const container=document.createElement('section');container.className='dsr-document';const heading=document.createElement('h3');heading.textContent=`Photo ${doc.source} — ${doc.kind}`;const name=document.createElement('p');name.textContent=photos[doc.source-1].file.name;const note=document.createElement('p');note.textContent=doc.date===null?'Date not extracted — check the original.':doc.date!==effective.date?`Different date: ${displayDate(doc.date)} — not this day’s record.`:`Document date: ${displayDate(doc.date)}`;container.append(heading,name,note);renderLines({lines:doc.lines},container,doc.kind==='Handwritten DSR',true,doc.source);amounts.append(container);}
  }finally{state.updating=false;renderPhotos();review.sync();}
 }
