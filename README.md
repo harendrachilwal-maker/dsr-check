@@ -4,8 +4,8 @@ The manager chooses the Reporting date, adds DSR photos in their own area, and a
 
 ## Phone test
 
-1. Leave `npm run dev` running on the laptop, with development Convex configured (`npx convex dev --once`).
-2. Connect the phone to the laptop's Wi-Fi and open `http://192.168.1.4:5173` (a laptop preview, not a live deployment). Refresh the page.
+1. Open https://ideal-mongoose-563.convex.site on the phone. The laptop does not need to be running.
+2. Refresh the page. For a local development preview instead, run `npx convex dev --once` and `npm run dev` on the laptop, connect the phone to the laptop's Wi-Fi and open `http://192.168.1.4:5173`.
 3. Choose the actual **Reporting date** (for a 7 October DSR, select 7 October 2026). Tap **Add DSR Photos** for the sheet/notebook, then **Add Other Photos** for bills and payment screenshots: JPEG, PNG or WebP, up to six photos, 10 MB combined. HEIC must be exported as JPEG first. Originals are not resized.
 4. Tap **Start AI Scanning**. This makes one paid AI call for the selected photos. There are no automatic retries.
 5. Check the selected reporting date and the actual date read from each document and each photo's classified type, own date, exact labels and ₹ amounts. Unreadable amounts say **Not extracted**; tentative figures have `?`. An explicitly read zero is **₹0**.
@@ -30,7 +30,13 @@ Photos and extraction responses remain in the current browser session; the actio
 
 Keep real records outside public/src, preferably in ignored `private-dsr/` on the laptop. Real JPEG/PNG/WebP/HEIC/PDF/Excel/CSV files and `.env.local` are ignored. Public tests use only made-up records; proof screenshots stay under ignored `.test-results/`. PROGRESS.md records the owner-confirmed milestone 1 checkpoint; contextual comparison remains a trial.
 
-The public code repository is https://github.com/harendrachilwal-maker/dsr-check. No production deployment or public app launch has been set up. Shipping follows AGENTS.md after owner acceptance. Production key, spend cap and access rules remain required before public paid use.
+The public code repository is https://github.com/harendrachilwal-maker/dsr-check. The production app is https://ideal-mongoose-563.convex.site, hosted by Convex Static Hosting. The owner confirmed the first deployment on 2026-10-09. The production key was checked as configured without displaying it; the provider spend cap and a paid production scan have not been verified by Codex.
+
+## Deploy
+
+Run `npm run deploy` from this folder in an interactive terminal and confirm Convex's production prompt. It deploys the backend, builds the frontend for the production deployment and uploads `dist/` through authenticated internal component functions. The build helper sets `VITE_CONVEX_SITE_URL` from the hosting CLI's target deployment so local development settings cannot send production scans to development. Existing `/extract`, `/compare` and `/records` addresses are preserved. A Git push saves code but does not deploy.
+
+Keep `OPENAI_API_KEY` in each deployment's Convex environment variables. Before deployment, check production with `npx convex env list --names-only --prod`; stop if `OPENAI_API_KEY` is absent. Never print its value or copy it to frontend settings. Production and development records remain separate.
 
 
 ## Context and comparison rules

@@ -1,6 +1,7 @@
 import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
-import { internal } from './_generated/api';
+import { internal, components } from './_generated/api';
+import { registerStaticRoutes } from '@convex-dev/static-hosting';
 import { BUSY, MAX_BYTES, imageType, sections, datedDocumentsFromRawResponse, autoDocumentsFromRawResponse, documentsFromRawResponse, dailyFromRawResponse, extractionFromRawResponse, totalsBySection, extractionFailureCode } from '../src/extraction';
 import { MAX_REQUEST_BYTES, parsePhotos, SIZE_ERROR } from '../src/uploads';
 import { selectDailyRow, validDate, recordKinds, recordType } from '../src/daily';
@@ -144,3 +145,5 @@ export const compare = httpAction(async (_ctx,request)=>{
 });
 http.route({path:'/compare',method:'POST',handler:compare});
 http.route({path:'/compare',method:'OPTIONS',handler:httpAction(async()=>new Response(null,{status:204,headers}))});
+
+registerStaticRoutes(http, components.staticHosting);

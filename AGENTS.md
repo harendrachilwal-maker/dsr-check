@@ -43,7 +43,7 @@ When I report a bug, I will describe what I did, what I expected, what happened,
 
 ## 3. Shipping
 
-- **Live link:** Not yet deployed. Record the verified live `.convex.site` URL here after the first working deployment. Never give someone a `localhost` link as the live app.
+- **Live link:** https://ideal-mongoose-563.convex.site (production; first deployment confirmed by the owner and page verified on 2026-10-09). Never give someone a `localhost` link as the live app.
 - **Repo:** https://github.com/harendrachilwal-maker/dsr-check (public code repository). Public repo means code only, not real hotel/guest records, receipts or secrets.
 - **Stack and host:** Use Convex for backend functions and database; use Convex Static Hosting for the manager's mobile web interface if it fits the project setup. The owner's channel is WhatsApp, not a substitute web chatbot. Check the chosen component's current integration guidance before wiring deployment.
 - **Deploy:** Set up and document an `npm run deploy` script for the project. In this sprint workflow a `git push` by itself is not assumed to deploy. Only after I say a milestone works: update progress, commit, push, then deploy when that milestone is ready to ship; provide the new live link and result.
