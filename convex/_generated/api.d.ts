@@ -8,11 +8,13 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as dayValidators from "../dayValidators.js";
 import type * as days from "../days.js";
 import type * as daysHttp from "../daysHttp.js";
 import type * as http from "../http.js";
 import type * as limits from "../limits.js";
+import type * as managerAccess from "../managerAccess.js";
 import type * as records from "../records.js";
 
 import type {
@@ -22,11 +24,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   dayValidators: typeof dayValidators;
   days: typeof days;
   daysHttp: typeof daysHttp;
   http: typeof http;
   limits: typeof limits;
+  managerAccess: typeof managerAccess;
   records: typeof records;
 }>;
 

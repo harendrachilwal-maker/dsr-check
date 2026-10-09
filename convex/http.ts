@@ -1,3 +1,5 @@
+import { auth } from './auth';
+import { managerScope } from './managerAccess';
 import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { internal, components } from './_generated/api';
@@ -10,9 +12,10 @@ import { comparisonReadingFromRaw, buildComparison } from '../src/comparison';
 import { comparisonSchema, comparisonInstructions } from '../src/comparison-request';
 import { applyCorrections } from '../src/confirmed-day';
 import { registerDayRoutes } from './daysHttp';
-const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
 export const extract = httpAction(async (ctx, request) => {
+  if(!await managerScope(ctx))return reply({error:'Sign in to continue.'},401);
   let stage = 'upload';
   const failed = (reason: string, status = 503, providerStatus?: number, code?: string) => {
     // Never log request bodies, financial figures, credentials or provider error messages.
@@ -92,6 +95,7 @@ export const extract = httpAction(async (ctx, request) => {
 });
 
 export const uploadRecords = httpAction(async (ctx, request) => {
+  if(!await managerScope(ctx))return reply({error:'Sign in to continue.'},401);
   const stored: import('./_generated/dataModel').Id<'_storage'>[] = [];
   try {
     const reader = request.body?.getReader(); if (!reader) return reply({error:'Choose supporting records.'},400);
@@ -134,6 +138,7 @@ http.route({path:'/records',method:'OPTIONS',handler:httpAction(async()=>new Res
 
 // Rechecking manager-supplied context is free: no model call, storage or quota mutation.
 export const compare = httpAction(async (_ctx,request)=>{
+  if(!await managerScope(_ctx))return reply({error:'Sign in to continue.'},401);
   try{
     const reader=request.body?.getReader();if(!reader)return reply({error:'Read the photos before comparing.'},400);
     const chunks:Uint8Array[]=[];let size=0;
@@ -148,5 +153,6 @@ export const compare = httpAction(async (_ctx,request)=>{
 http.route({path:'/compare',method:'POST',handler:compare});
 http.route({path:'/compare',method:'OPTIONS',handler:httpAction(async()=>new Response(null,{status:204,headers}))});
 
+auth.addHttpRoutes(http);
 registerDayRoutes(http);
 registerStaticRoutes(http, components.staticHosting);

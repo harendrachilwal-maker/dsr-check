@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './manager-fixture';
 import { comparisonReadingFromRaw, buildComparison } from '../../src/comparison';
 import { makeRaw, comparisonDate as date } from '../comparison-fixture';
 

@@ -23,7 +23,7 @@ test('unreadable lines stay Not extracted while a written zero stays ₹0', () =
 });
 test('rolling app-wide quota blocks call 101 and allows calls after one hour', async () => {
   vi.useFakeTimers(); vi.setSystemTime(10000000);
-  const t = convexTest(schema, modules);
+  const t = convexTest(schema, modules).withIdentity({subject:"test-manager|test-session"});
   for (let i=0; i<100; i++) expect(await t.mutation(internal.limits.reserve, {})).toBe(true);
   expect(await t.mutation(internal.limits.reserve, {})).toBe(false);
   vi.setSystemTime(13600000);
@@ -34,7 +34,7 @@ test('HTTP action sends the image to the requested model and retains the raw rep
   const raw = { status: 'completed', output: [{ type: 'reasoning' }, { type:'message', content:[{type:'output_text',text:JSON.stringify(amounts)}]}] };
   const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(raw)));
   vi.stubGlobal('fetch', fetchMock);
-  const t = convexTest(schema, modules);
+  const t = convexTest(schema, modules).withIdentity({subject:"test-manager|test-session"});
   const res = await t.fetch('/extract', {method:'POST', body:image});
   expect(res.status).toBe(200); expect(await res.json()).toEqual({extracted:amounts,totals:totalsBySection(validateExtraction(amounts)),raw});
   const body=JSON.parse(fetchMock.mock.calls[0][1].body);
@@ -44,14 +44,14 @@ test('HTTP action sends the image to the requested model and retains the raw rep
 });
 test('quota hit does not call OpenAI', async () => {
   vi.stubEnv('OPENAI_API_KEY', 'fake-test-key'); const mock=vi.fn(); vi.stubGlobal('fetch',mock);
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   await t.run(async ctx => { await ctx.db.insert('aiLimits',{name:'extraction',calls:Array(100).fill(Date.now())}); });
   const res=await t.fetch('/extract',{method:'POST',body:image});
   expect(res.status).toBe(429); expect(await res.json()).toEqual({error:BUSY}); expect(mock).not.toHaveBeenCalled();
 });
 test('missing key and invalid upload never call OpenAI', async () => {
   vi.stubEnv('OPENAI_API_KEY',''); const mock=vi.fn(); vi.stubGlobal('fetch',mock);
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   expect((await t.fetch('/extract',{method:'POST',body:image})).status).toBe(503);
   expect((await t.fetch('/extract',{method:'POST',body:'not a photo'})).status).toBe(400);
   expect((await t.fetch('/extract',{method:'POST',body:image,headers:{'Content-Length':'14680065'}})).status).toBe(413);
@@ -59,7 +59,7 @@ test('missing key and invalid upload never call OpenAI', async () => {
 });
 test('truncated, invalid and failed AI replies return the retry message instead of fabricated amounts', async () => {
   vi.stubEnv('OPENAI_API_KEY','fake-test-key');
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   for (const raw of [{status:'incomplete',output:[]},{status:'completed',output:[]},{status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({lines:[{...amounts.lines[0],amount:'unknown'}]})}]}]}]) {
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify(raw))));
     const res=await t.fetch('/extract',{method:'POST',body:image}); expect(res.status).toBe(503); expect(await res.json()).toEqual({error:BUSY,...(raw.status==='completed'?{code:raw.output.length?'invalid_amount':'invalid_json'}:{})});
@@ -71,7 +71,7 @@ test('truncated, invalid and failed AI replies return the retry message instead 
 test('failed scans identify token exhaustion and provider status without logging private provider data', async () => {
   vi.stubEnv('OPENAI_API_KEY','fake-test-key');
   const log=vi.spyOn(console,'warn').mockImplementation(()=>{});
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'incomplete',incomplete_details:{reason:'max_output_tokens'},output:[{private:'PRIVATE-HOTEL-DATA'}]}))));
   const incomplete=await t.fetch('/extract',{method:'POST',body:image});
   expect(await incomplete.json()).toEqual({error:BUSY});
@@ -88,7 +88,7 @@ test('multiple pages of one DSR are sent together in one AI call and use one quo
   vi.stubEnv('OPENAI_API_KEY','fake-test-key');
   const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(amounts)}]}]})));
   vi.stubGlobal('fetch',mock);
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const images=['data:image/jpeg;base64,/9j/4AAAAAA=','data:image/png;base64,iVBORw0KGgo='];
   const res=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images})});
   expect(res.status).toBe(200); expect((await res.json()).extracted).toEqual(amounts);
@@ -99,7 +99,7 @@ test('multiple pages of one DSR are sent together in one AI call and use one quo
 });
 test('empty, excessive or invalid multi-photo uploads are rejected before charging', async () => {
   vi.stubEnv('OPENAI_API_KEY','fake-test-key'); const mock=vi.fn(); vi.stubGlobal('fetch',mock);
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   for(const images of [[],Array(7).fill('data:image/jpeg;base64,/9j/4AAAAAA='),['data:image/jpeg;base64,bm90IGEgcGhvdG8='],['data:image/jpeg;base64,/9j/4AAAAAA=',null]]) {
     expect((await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images})})).status).toBe(400);
   }
@@ -108,7 +108,7 @@ test('empty, excessive or invalid multi-photo uploads are rejected before chargi
 
 test('combined original photo size is enforced before the paid call', async () => {
   vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const big='data:image/jpeg;base64,'+btoa('\xff\xd8\xff'+'a'.repeat(5*1024*1024));
   const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:[big,big]})});
   expect(response.status).toBe(413);expect(mock).not.toHaveBeenCalled();

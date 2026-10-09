@@ -1,6 +1,6 @@
 # Digital DSR — manager review and History trial
 
-The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. The current dev step adds inline correction, Confirm day and History. There is no report-format selector, Excel option, separate supporting-record category form, login, owner approval, WhatsApp or owner dashboard. The owner confirmed this step works on dev. Production remains the previous deployed version; deployment of this step has not been authorised.
+The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. The current dev step adds inline correction, Confirm day and History. There is no report-format selector, Excel option, separate supporting-record category form, owner approval, WhatsApp or owner dashboard. Dev now requires manager email/password sign-in, with open sign-up. The owner confirmed this step works on dev. Production remains the previous deployed version; deployment of this step has not been authorised.
 
 ## Phone test
 
@@ -30,7 +30,7 @@ Use `http://192.168.1.4:5173` on the phone with the laptop on the same Wi-Fi and
 
 Tap Confirm day after reviewing. The date must come from an identified DSR document. Missing or uncertain values remain flagged in the saved report. History shows dates newest first; open a date to see its saved lines, AI values, corrections, written totals and Matches/Differs checks. Confirming that date again asks "Replace the saved day?"; Cancel preserves it, and replacement creates a new version while retaining the previous one.
 
-History is private to the current browser without a login. A random 256-bit access key remains in browser storage; the backend checks it before every save/read and stores only its hash. Changing browser/device or clearing browser storage loses access to that browser's History. Dev and production use separate keys and records. Photos are never part of a confirmed day.
+History is private to the signed-in account. Convex Auth verifies the session on every scan, correction/check, confirmation and History read. Signing out clears the current browser draft and hides the manager app. Sign in to the same account to reopen its History on another browser. Legacy browser-scoped days remain preserved on dev, separate from account-owned records; they are not assigned to new users or deleted. No migration is included. Dev and production have separate accounts, keys and records; production is unchanged. Photos are never part of a confirmed day.
 
 ## Verification and private records
 
@@ -54,3 +54,9 @@ The AI reads roles, names, purpose, dates and references; code establishes conne
 Repeated explicit bill/transaction references count once; conflicting copies or possible duplicates without identifying references leave comparisons incomplete. Overlapping DSR photos cannot produce a complete match. Guest cash and UPI are compared separately; advances/refunds are displayed separately. A context answer may classify or link an existing line, but cannot change its amount/date/source or turn a repeated written total into another transaction. The comparison endpoint uses the current raw reading plus your answers, validates them again and performs no provider call, storage write or quota mutation. Answers are temporary and reset for new photos, a new date or a fresh scan.
 
 The comparison response schema restricts DSR classifications by upload source and uses the documented nested `anyOf` form from the [OpenAI Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs). No paid real-photo test has been run for this new schema/instruction set; simulated checks prove calculations and the browser flow, not OCR accuracy. There are no automatic AI retries. The larger response cap permits longer replies and can increase scan cost; no production cap/cost has been verified.
+
+## Manager sign-in (dev only)
+
+Open the dev page and choose Create an account, enter an email and a password of at least 8 characters, then create the account. Anyone can sign up; each account has its own scans and History. Sign out returns to the sign-in screen. There is no email verification or password-reset email service in this milestone. Use made-up credentials for tests.
+
+Future production Convex Auth variable names only: `JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`, `CONVEX_SITE_URL` (Convex-provided deployment URL). Existing scanning still needs `OPENAI_API_KEY`. Frontend public endpoint names: `VITE_CONVEX_URL`, `VITE_CONVEX_SITE_URL`. Signing keys are generated independently for dev and production and never committed or printed. No production variables were inspected or changed for this milestone.

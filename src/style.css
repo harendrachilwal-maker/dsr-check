@@ -73,3 +73,8 @@ nav [aria-current="page"] { font-weight:700; }
 .history-list li { padding:16px 0; border-bottom:1px solid #17212F; }
 .history-list button { width:100%; text-align:left; font-weight:700; }
 #history-page p, #history-page dt { overflow-wrap:anywhere; }
+#login-root { max-width: 680px; margin: 0 auto; padding: 24px; }
+#login-root:has(header) { max-width: 440px; }
+#login-root form { display: grid; gap: 16px; }
+#login-root input { width: 100%; min-height: 48px; padding: 12px; font: inherit; box-sizing: border-box; }
+@media(max-width: 340px) { #login-root { padding: 16px; } }

@@ -1,3 +1,4 @@
+import { managerScope } from './managerAccess';
 import type { HttpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
@@ -8,12 +9,6 @@ import { validDate } from '../src/daily';
 
 const headers={'Content-Type':'application/json','Cache-Control':'no-store','Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'};
 const reply=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers});
-async function scopeFor(request:Request){
-  const bearer=request.headers.get('Authorization')??'';
-  if(!/^Bearer [a-f0-9]{64}$/.test(bearer))return null;
-  const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(bearer.slice(7)));
-  return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');
-}
 async function readBody(request:Request){
   const reader=request.body?.getReader();if(!reader)throw new Error('Missing confirmation.');
   const chunks:Uint8Array[]=[];let size=0;
@@ -22,7 +17,7 @@ async function readBody(request:Request){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 const confirm=httpAction(async(ctx,request)=>{
-  const scope=await scopeFor(request);if(!scope)return reply({error:'History access is missing. Reload the page and try again.'},401);
+  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
   try{
     const body=await readBody(request);
     const keys=['raw','date','sources','dsrSources','choices','corrections','expectedVersion'];
@@ -37,14 +32,14 @@ const confirm=httpAction(async(ctx,request)=>{
   }catch{return reply({error:'Your day could not be confirmed. Check its document date and corrections, then try again.'},400);}
 });
 const history=httpAction(async(ctx,request)=>{
-  const scope=await scopeFor(request);if(!scope)return reply({error:'History access is missing. Reload the page and try again.'},401);
+  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
   try{
     const cursor=new URL(request.url).searchParams.get('cursor');
     return reply(await ctx.runQuery(internal.days.history,{scope,paginationOpts:{numItems:20,cursor}}));
   }catch{return reply({error:'History could not be loaded. Try again.'},400);}
 });
 const detail=httpAction(async(ctx,request)=>{
-  const scope=await scopeFor(request);if(!scope)return reply({error:'History access is missing. Reload the page and try again.'},401);
+  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
   const date=new URL(request.url).searchParams.get('date');if(!date||!validDate(date))return reply({error:'Choose a saved date.'},400);
   const day=await ctx.runQuery(internal.days.detail,{scope,date});
   return day?reply({day}):reply({error:'No saved day found for this date.'},404);

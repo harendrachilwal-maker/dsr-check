@@ -1,4 +1,4 @@
-import {expect,test} from '@playwright/test';
+import {expect,test} from './manager-fixture';
 // All document contents below are fabricated. Provider replies are simulated, not paid calls.
 const dsrDate='2026-11-02';
 const lines=[{section:'Sales',label:'Room',amount:4100,unclear:false},{section:'Sales',label:'Food',amount:1250,unclear:false},{section:'Payment',label:'UPI',amount:0,unclear:false},{section:'Expense',label:'Vendor bill',amount:null,unclear:false},{section:'Cash balance',label:'Closing cash',amount:50,unclear:false}];

@@ -1,3 +1,4 @@
+import { authenticatedFetch } from './session';
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/700.css';
 import './style.css';
@@ -88,7 +89,7 @@ primary.onclick=async()=>{
  scanning=true;renderPhotos();clearResults();error();primary.textContent='Reading your DSR…';get('status').textContent='Reading your DSR…';get('selected').classList.add('scanning');let failed=false;
  try{
   const images=await Promise.all(photos.map(async photo=>encodeImage(new Uint8Array(await photo.file.arrayBuffer()))));
-  const response=await fetch(`${endpoint}/extract`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'compare',date:date.value,dsrSources:photos.flatMap((photo,index)=>photo.role==='DSR'?[index+1]:[]),images}),signal:AbortSignal.timeout(100000)});
+  const response=await authenticatedFetch(`${endpoint}/extract`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'compare',date:date.value,dsrSources:photos.flatMap((photo,index)=>photo.role==='DSR'?[index+1]:[]),images}),signal:AbortSignal.timeout(100000)});
   const data=await response.json();if(!response.ok)throw new Error(data.error||BUSY);
   if(data.mode!=='dated'&&data.mode!=='compare')throw new Error(BUSY);
   let reading:ReturnType<typeof datedDocumentsFromRawResponse>;
@@ -124,7 +125,7 @@ function renderComparison(report:Comparison,focusEntry?:string){
   state.updating=true;renderPhotos();review.sync();
   try{
   const choices=[...state.choices.filter(item=>item.id!==choice.id),choice];
-  const response=await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:state.raw,date:state.reading.date,sources:state.reading.documents.map(doc=>doc.source),dsrSources:state.reading.dsrSources,choices,corrections:state.corrections}),signal:AbortSignal.timeout(15000)});
+  const response=await authenticatedFetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:state.raw,date:state.reading.date,sources:state.reading.documents.map(doc=>doc.source),dsrSources:state.reading.dsrSources,choices,corrections:state.corrections}),signal:AbortSignal.timeout(15000)});
   const data=await response.json();if(comparisonState!==state)return;
   if(!response.ok)throw new Error(data.error||'Check this context and try again.');
   if(JSON.stringify(data.comparison)!==JSON.stringify(buildComparison(applyCorrections(state.reading,state.corrections),choices)))throw new Error('The comparison could not be checked. Try again.');
@@ -137,7 +138,7 @@ async function applyLineCorrections(changes:Correction[]){
  const state=comparisonState;if(!state||state.updating)throw new Error('Wait for the current check to finish.');
  const effective=applyCorrections(state.reading,changes);state.updating=true;renderPhotos();review.sync();
  try{
-  const response=await fetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:state.raw,date:state.reading.date,sources:state.reading.documents.map(doc=>doc.source),dsrSources:state.reading.dsrSources,choices:state.choices,corrections:changes}),signal:AbortSignal.timeout(15000)});
+  const response=await authenticatedFetch(`${import.meta.env.VITE_CONVEX_SITE_URL}/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:state.raw,date:state.reading.date,sources:state.reading.documents.map(doc=>doc.source),dsrSources:state.reading.dsrSources,choices:state.choices,corrections:changes}),signal:AbortSignal.timeout(15000)});
   const data=await response.json();if(comparisonState!==state)throw new Error('The reading changed. Review the latest photos.');
   if(!response.ok||JSON.stringify(data.comparison)!==JSON.stringify(buildComparison(effective,state.choices)))throw new Error('Your correction could not be checked. Try again.');
   state.corrections=changes;renderComparison(data.comparison);

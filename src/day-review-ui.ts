@@ -1,3 +1,4 @@
+import { authenticatedFetch } from './session';
 import { displayAmount, displayLineAmount, sections, type DsrLine } from './extraction';
 import { applyCorrections, checkWord, parseAmount, prepareDay, type Correction, type SavedDay, type SavedLine } from './confirmed-day';
 import { type Reading, type Choice } from './comparison';
@@ -20,7 +21,7 @@ export class DayReview {
     this.navUpload=button('Upload DSR',()=>this.showUpload());this.navHistory=button('History',()=>{void this.showHistory();});
     nav.append(this.navUpload,this.navHistory);this.history.id='history-page';this.history.hidden=true;
     const heading=el('h1','History');heading.tabIndex=-1;
-    this.history.append(heading,el('p','Confirmed days, newest first. Saved days are private to this browser. Photos are not saved.'),this.content);
+    this.history.append(heading,el('p','Confirmed days, newest first. Saved days are private to your account. Photos are not saved.'),this.content);
     app.append(nav,this.manager,this.history);
     const panel=el('section');panel.id='confirmation';panel.hidden=true;
     this.confirmButton=button('Confirm day',()=>{void this.confirm();});this.confirmButton.className='primary-action';
@@ -38,13 +39,8 @@ export class DayReview {
     document.querySelectorAll<HTMLButtonElement>('[data-correct]').forEach(button=>{button.disabled=this.saving||this.active!==null||this.deps.busy()||!!state?.updating;});
   }
   showUpload(){this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');}
-  private access(){
-    const key=`dsr-history-access-v1:${this.deps.endpoint}`;let token=localStorage.getItem(key);
-    if(!token||!/^[a-f0-9]{64}$/.test(token)){token=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('');localStorage.setItem(key,token);}
-    return token;
-  }
   private async request(path:string,body?:unknown){
-    const response=await fetch(`${this.deps.endpoint}${path}`,{method:body===undefined?'GET':'POST',headers:{Authorization:`Bearer ${this.access()}`,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});
+    const response=await authenticatedFetch(`${this.deps.endpoint}${path}`,{method:body===undefined?'GET':'POST',headers:{...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});
     const data=await response.json();if(!response.ok&&response.status!==409)throw new Error(data.error??'The saved day could not be loaded. Try again.');return data;
   }
   attachLine(row:HTMLElement,source:number,index:number,original:DsrLine,current:DsrLine){

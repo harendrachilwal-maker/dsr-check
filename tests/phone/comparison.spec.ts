@@ -1,4 +1,4 @@
-import {expect,test} from '@playwright/test';
+import {expect,test} from './manager-fixture';
 import {buildComparison,comparisonReadingFromRaw} from '../../src/comparison';
 import {comparisonDate as date,comparisonDocuments as documents,comparisonContexts as contexts,makeRaw} from '../comparison-fixture';
 for(const width of [320,390,1280])test(`expense connections and sources work at ${width}px; context is free and raw stays original`,async({page})=>{

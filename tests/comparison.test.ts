@@ -72,12 +72,12 @@ test('DSR difference is deterministic in paise and explicit zero is not missing'
 });
 test('comparison extraction uses one capped call and returns raw plus code-calculated results',async()=>{
  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const raw=makeRaw(),mock=vi.fn().mockResolvedValue(new Response(JSON.stringify(raw)));vi.stubGlobal('fetch',mock);
- const t=convexTest(schema,modules);const res=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'compare',date,dsrSources:[1],images:Array(5).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});
+ const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});const res=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'compare',date,dsrSources:[1],images:Array(5).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});
  expect(res.status).toBe(200);expect(await res.json()).toEqual({mode:'compare',raw,comparison:buildComparison(reading())});expect(mock).toHaveBeenCalledTimes(1);
  const sent=JSON.parse(mock.mock.calls[0][1].body);expect(sent.max_output_tokens).toBe(6000);expect(sent.instructions).toContain('code calculates');expect(sent.text.format.schema.required).toContain('contexts');
 });
 test('context rechecks are calculated in Convex without an AI call or changes to raw amounts',async()=>{
- const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+ const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
  const raw=makeRaw(),original=JSON.stringify(raw),choice:Choice={id:'4:0',role:'Expense payment',party:'Example Painter',purpose:'Painting',method:'UPI',link:'3:0'};
  const body={date,raw,sources:[1,2,3,4,5],dsrSources:[1],choices:[choice]};
  const response=await t.fetch('/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

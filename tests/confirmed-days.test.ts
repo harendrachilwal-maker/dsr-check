@@ -37,7 +37,7 @@ test('a blank DSR cell remains Not extracted when the day is saved, never an inv
  const raw=makeRaw();const answer=JSON.parse(raw.output[0].content[0].text);
  answer.documents[0].lines.push({section:'Expense',label:'Other Bills',amount:null,unclear:false});
  answer.contexts.push({...answer.contexts[0],line:1});raw.output[0].content[0].text=JSON.stringify(answer);
- const t=convexTest(schema,modules);const response=await t.fetch('/days/confirm',request({...body(),raw}));expect(response.status).toBe(200);
+ const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});const response=await t.fetch('/days/confirm',request({...body(),raw}));expect(response.status).toBe(200);
  const {day}=await (await t.fetch(`/days/detail?date=${date}`,{headers:{Authorization:`Bearer ${token}`}})).json();
  const saved=day.lines.find((line:{id:string})=>line.id==='1:1');expect(saved.aiValue).toBeNull();expect(saved).not.toHaveProperty('correctedValue');
  expect(day.checks.find((check:{title:string})=>check.title==='Expenses').status).toBe('Not enough information');
@@ -45,7 +45,7 @@ test('a blank DSR cell remains Not extracted when the day is saved, never an inv
 });
 
 test('confirmation persists without photos, protects history and requires explicit version replacement',async()=>{
- const t=convexTest(schema,modules);
+ const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
  const first=await t.fetch('/days/confirm',request(body([{id:'3:0',amount:6100}])));
  expect(first.status).toBe(200);const one=await first.json();expect(one.status).toBe('saved');
  const second=await t.fetch('/days/confirm',request(body()));
@@ -54,8 +54,8 @@ test('confirmation persists without photos, protects history and requires explic
  const detail=await (await t.fetch(`/days/detail?date=${date}`,{headers})).json();
  expect(detail.day.lines.find((line:{id:string})=>line.id==='3:0').correctedValue).toBe(6100);
  expect(detail.day.confirmedAt).toBeGreaterThan(0);
- expect((await t.fetch(`/days/detail?date=${date}`,{headers:{Authorization:`Bearer ${otherToken}`}})).status).toBe(404);
- expect((await t.fetch('/days/history')).status).toBe(401);
+ expect((await t.withIdentity({subject:'other-manager|session'}).fetch(`/days/detail?date=${date}`)).status).toBe(404);
+ expect((await convexTest(schema,modules).fetch('/days/history')).status).toBe(401);
  expect((await t.fetch('/days/confirm',request({...body(),images:['data:image/jpeg;base64,private']}))).status).toBe(400);
  const replacement=await t.fetch('/days/confirm',request({...body(),expectedVersion:one.version}));
  expect(replacement.status).toBe(200);const two=await replacement.json();expect(two.version).not.toBe(one.version);
@@ -67,11 +67,11 @@ test('confirmation persists without photos, protects history and requires explic
 });
 
 test('History orders by document date, paginates and cannot mix browser scopes',async()=>{
- const t=convexTest(schema,modules);
+ const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
  for(const dayDate of ['2026-11-03','2026-11-01','2026-11-04']){
   const raw=makeRaw(),answer=JSON.parse(raw.output[0].content[0].text);answer.date=dayDate;for(const doc of answer.documents)doc.date=dayDate;raw.output[0].content[0].text=JSON.stringify(answer);
   expect((await t.fetch('/days/confirm',request({...body(),date:dayDate,raw}))).status).toBe(200);
  }
  const list=await (await t.fetch('/days/history',{headers:{Authorization:`Bearer ${token}`}})).json();expect(list.days.map((day:{date:string})=>day.date)).toEqual(['2026-11-04','2026-11-03','2026-11-01']);
- const isolated=await (await t.fetch('/days/history',{headers:{Authorization:`Bearer ${otherToken}`}})).json();expect(isolated.days).toEqual([]);
+ const isolated=await (await t.withIdentity({subject:'other-manager|session'}).fetch('/days/history')).json();expect(isolated.days).toEqual([]);
 });

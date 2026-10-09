@@ -18,7 +18,7 @@ test('selected Excel date preserves blank and zero, rejects absent, invalid or d
 });
 test('Excel backend sends only selected date to AI and rejects altered source values',async()=>{
   vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify(raw)));vi.stubGlobal('fetch',mock);
-  const t=convexTest(schema,modules);const request={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'sheet',date:'2026-11-02',sheets})};
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});const request={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'sheet',date:'2026-11-02',sheets})};
   const response=await t.fetch('/extract',request);expect(response.status).toBe(200);
   expect((await response.json()).raw).toEqual(raw);
   const input=JSON.parse(mock.mock.calls[0][1].body).input;expect(JSON.stringify(input)).not.toContain('999');expect(JSON.stringify(input)).toContain('4100');
@@ -27,12 +27,12 @@ test('Excel backend sends only selected date to AI and rejects altered source va
   expect((await t.fetch('/extract',request)).status).toBe(503);
 });
 test('invalid or duplicate Excel dates never consume a paid call',async()=>{
-  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   for(const body of [{mode:'sheet',date:'2026-11-03',sheets},{mode:'sheet',date:'2026-11-02',sheets:[...sheets,...sheets]},{mode:'sheet',date:'invalid',images:['data:image/jpeg;base64,/9j/4AAAAAA=']}])expect((await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).status).toBe(400);
   expect(mock).not.toHaveBeenCalled();
 });
 test('sheet photo uses chosen date and retains raw answer instead of combining monthly rows',async()=>{
-  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify(raw)));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify(raw)));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const result=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'sheet',date:'2026-11-02',images:['data:image/jpeg;base64,/9j/4AAAAAA=']})});
   expect(result.status).toBe(200);const request=JSON.parse(mock.mock.calls[0][1].body);expect(request.instructions).toContain('ignore every other date');expect(request.text.format.schema.properties.date.enum).toEqual(['2026-11-02']);
 });
@@ -40,13 +40,13 @@ function form(kind='Guest bill',file='fabricated.pdf',contents='%PDF-1.4\nFabric
   const body=new FormData();body.set('date','2026-11-02');body.set('kind',kind);body.append('files',new Blob([contents],{type:'application/pdf'}),file);return body;
 }
 test('supporting records are really stored by date and type without calling AI or exposing storage URLs',async()=>{
-  const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const response=await t.fetch('/records',{method:'POST',body:form()});expect(response.status).toBe(200);const result=await response.json();expect(result.status).toBe('Uploaded — not checked');expect(JSON.stringify(result)).not.toContain('storageId');
   const saved=await t.run(ctx=>ctx.db.query('supportingRecords').withIndex('by_batch',q=>q.eq('batch',result.batch)).collect());expect(saved).toHaveLength(1);expect(saved[0].date).toBe('2026-11-02');expect(saved[0].kind).toBe('Guest bill');
   const bytes=await t.run(async ctx=>(await ctx.storage.get(saved[0].storageId))?.text());expect(bytes).toBe('%PDF-1.4\nFabricated record only');expect(mock).not.toHaveBeenCalled();
 });
 test('bad supporting files and exhausted upload quota do not store records',async()=>{
-  const t=convexTest(schema,modules);
+  const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   expect((await t.fetch('/records',{method:'POST',body:form('Guest bill','fake.pdf','not a PDF')})).status).toBe(400);
   expect((await t.fetch('/records',{method:'POST',body:form('Unknown kind')})).status).toBe(400);
   await t.run(ctx=>ctx.db.insert('aiLimits',{name:'records',calls:Array(25).fill(Date.now())}));
@@ -56,7 +56,7 @@ test('bad supporting files and exhausted upload quota do not store records',asyn
 
 
 test('empty and whitespace-only Excel cells remain blank and fabricated zero is rejected',async()=>{
-  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const t=convexTest(schema,modules);
+  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const incorrect={date:'2026-11-02',lines:[{section:'Payment',label:'UPI',amount:0,unclear:false}]};
   const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(incorrect)}]}]})));vi.stubGlobal('fetch',mock);
   for(const blank of ['', '   ']){
@@ -73,7 +73,7 @@ const mixed={date:'2026-11-02',documents:[
   {source:4,kind:'Expense bill',date:'2026-11-01',lines:[{section:'Expense',label:'Supplier',amount:450,unclear:false}]},
 ]};
 test('mixed photos have separate source readings in one call; sheet blanks are not filled by receipts',async()=>{
-  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(mixed)}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(mixed)}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'bundle',date:mixed.date,images:Array(4).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});
   expect(response.status).toBe(200);const result=await response.json();expect(result.mode).toBe('bundle');expect(JSON.parse(result.raw.output[0].content[0].text)).toEqual(mixed);
   const sent=JSON.parse(mock.mock.calls[0][1].body);expect(sent.instructions).toContain('Do not treat bills or payment screenshots as pages');expect(sent.instructions).toContain('Never replace blank sheet cells');expect(sent.input[0].content.filter((item:{type:string})=>item.type==='input_image')).toHaveLength(4);expect(mock).toHaveBeenCalledTimes(1);
@@ -86,13 +86,13 @@ test('missing, duplicate, invented sources and wrong sheet dates are rejected; u
 });
 test('Excel with bill photos checks only the Excel source and never folds bills into its numbers',async()=>{
   vi.stubEnv('OPENAI_API_KEY','fake-test-key');const documents=[{source:0,kind:'Daily sheet',date:values.date,lines:values.lines},mixed.documents[1]];documents[1]={...documents[1],source:1};
-  const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({date:values.date,documents})}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({date:values.date,documents})}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'bundle',date:values.date,sheets,images:['data:image/jpeg;base64,/9j/4AAAAAA=']})});expect(response.status).toBe(200);
   expect(JSON.stringify(JSON.parse(mock.mock.calls[0][1].body).input)).not.toContain('999');
 });
 
 test('auto photos read date from the DSR with no client date and still use one capped call',async()=>{
-  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(mixed)}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(mixed)}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'auto',images:Array(4).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});expect(response.status).toBe(200);expect((await response.json()).mode).toBe('auto');
   const sent=JSON.parse(mock.mock.calls[0][1].body);expect(sent.instructions).toContain('never from today');expect(sent.instructions).toContain('monthly table with multiple dates');expect(sent.text.format.schema.properties.date).toEqual({type:['string','null']});expect(mock).toHaveBeenCalledTimes(1);
 });
@@ -106,19 +106,19 @@ test('auto dates require a DSR source, reject invented dates and conflicting DSR
   expect(()=>autoDocumentsFromRawResponse(raw('2026-11-02',[{source:1,kind:'Daily sheet',date:'2026-11-02',lines:[]},{source:2,kind:'Handwritten DSR',date:'2026-11-03',lines:[]}]),[1,2])).toThrow('Conflicting DSR dates');
 });
 test('auto upload rejects date and Excel payloads before a paid call',async()=>{
-  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
   for(const extra of [{date:'2026-11-02'},{sheets}])expect((await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'auto',images:['data:image/jpeg;base64,/9j/4AAAAAA='],...extra})})).status).toBe(400);
   expect(mock).not.toHaveBeenCalled();
 });
 
 
 test('dated split upload passes selected date and DSR role before one AI call',async()=>{
- vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(mixed)}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+ vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(mixed)}]}]})));vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
  const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'dated',date:mixed.date,dsrSources:[1],images:Array(4).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});expect(response.status).toBe(200);expect((await response.json()).mode).toBe('dated');
  const sent=JSON.parse(mock.mock.calls[0][1].body);expect(sent.instructions).toContain('DSR-designated photo sources are 1');expect(sent.instructions).toContain('Supporting photos must never supply');expect(sent.text.format.schema.properties.date.enum).toEqual([mixed.date]);expect(mock).toHaveBeenCalledTimes(1);
 });
 test('bad split date or DSR role is rejected before charging; bills cannot become the main report',async()=>{
- vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules);
+ vi.stubEnv('OPENAI_API_KEY','fake-test-key');const mock=vi.fn();vi.stubGlobal('fetch',mock);const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
  for(const extra of [{date:'invalid',dsrSources:[1]},{date:mixed.date,dsrSources:[]},{date:mixed.date,dsrSources:[2]},{date:mixed.date,dsrSources:[1,1]}])expect((await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'dated',images:['data:image/jpeg;base64,/9j/4AAAAAA='],...extra})})).status).toBe(400);
  expect(mock).not.toHaveBeenCalled();const {datedDocumentsFromRawResponse}=await import('../src/extraction');
  const raw=(documents:unknown[])=>({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({date:mixed.date,documents})}]}]});
@@ -130,7 +130,7 @@ test('bad split date or DSR role is rejected before charging; bills cannot becom
 
 test('validation diagnostics identify multi-photo rejection without leaking raw records',async()=>{
  vi.stubEnv('OPENAI_API_KEY','fake-test-key');const warn=vi.spyOn(console,'warn').mockImplementation(()=>{});
- const t=convexTest(schema,modules);const mock=vi.fn();vi.stubGlobal('fetch',mock);
+ const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});const mock=vi.fn();vi.stubGlobal('fetch',mock);
  const cases=[
   {documents:mixed.documents.slice(0,3),code:'document_count_mismatch'},
   {documents:[mixed.documents[0],mixed.documents[0],...mixed.documents.slice(2)],code:'invalid_document_source'},
@@ -155,7 +155,7 @@ test('multi-photo missing-field reading succeeds while raw response is kept exac
  const documents=[{...mixed.documents[0],lines:[{section:'Expense',label:'Vendor bill',amount:null,unclear:false}]},mixed.documents[1]];
  const raw={status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({date:mixed.date,documents})}]}]};
  const mock=vi.fn().mockResolvedValue(new Response(JSON.stringify(raw)));vi.stubGlobal('fetch',mock);
- const t=convexTest(schema,modules);const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'dated',date:mixed.date,dsrSources:[1],images:Array(2).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});
+ const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});const response=await t.fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'dated',date:mixed.date,dsrSources:[1],images:Array(2).fill('data:image/jpeg;base64,/9j/4AAAAAA=')})});
  expect(response.status).toBe(200);const reply=await response.json();expect(reply).toEqual({mode:'dated',raw});
  const {datedDocumentsFromRawResponse}=await import('../src/extraction');
  expect(datedDocumentsFromRawResponse(reply.raw,mixed.date,[1,2],[1]).documents[0].lines).toEqual([{section:'Expense',label:'Vendor bill',amount:null,unclear:true}]);expect(mock).toHaveBeenCalledTimes(1);
