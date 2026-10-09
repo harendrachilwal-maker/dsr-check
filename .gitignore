@@ -1,0 +1,32 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+private-dsr/
+real-dsr/
+**/*.[jJ][pP][gG]
+**/*.[jJ][pP][eE][gG]
+**/*.[pP][nN][gG]
+**/*.[wW][eE][bB][pP]
+**/*.[hH][eE][iI][cC]
+**/*.[pP][dD][fF]
+.test-results/
+test-results/
+playwright-report/
+.DS_Store
+
+**/*.[xX][lL][sS]
+**/*.[xX][lL][sS][xX]
+**/*.[cC][sS][vV]
+
+# Local Codex tools and design review artifacts
+.agents/
+.impeccable/
+# Other photo formats must also stay local
+**/*.[gG][iI][fF]
+**/*.[bB][mM][pP]
+**/*.[tT][iI][fF]
+**/*.[tT][iI][fF][fF]
+**/*.[aA][vV][iI][fF]
+**/*.[hH][eE][iI][fF]

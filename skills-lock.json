@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "skills": {
+    "agentation": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/agentation/SKILL.md",
+      "computedHash": "3dc445861a3588d4cefb560c798d8bb11aeb1aa0f3201c6dfad330ce767eba3f"
+    },
+    "art-direction": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/art-direction/SKILL.md",
+      "computedHash": "c1a43c5770dcd9c26f5788d5a5750318424782befbcc3f17c95c7f2f2c768ca2"
+    },
+    "checkpoint": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/checkpoint/SKILL.md",
+      "computedHash": "cc0908acd19938f13f0e58336ad69ade87398ce22dfc26c62567aac8a325fb80"
+    },
+    "clearshot": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/clearshot/SKILL.md",
+      "computedHash": "df9517041092d2c0ea64f850d3877bcbe571e3b3ac5b31b5bf1d29951b222654"
+    },
+    "convex-agent": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/convex-agent/SKILL.md",
+      "computedHash": "e25809ea0b9866696674e0e41fcdcdb9ce69a6f34dcbc743ab00d6c8b7649c37"
+    },
+    "convex-auth": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/convex-auth/SKILL.md",
+      "computedHash": "140cd7ee7520bdf1d9ebb589ecd985e3a6fd46ff8b9885a0fad85f64c93200f6"
+    },
+    "convex-dev-static-hosting": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/convex-dev-static-hosting/SKILL.md",
+      "computedHash": "1a17a11af7e5392bbc8fe56117dfcf96b24656ca4138600c3618c33ca8f3b9cb"
+    },
+    "convex-expert": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/convex-expert/SKILL.md",
+      "computedHash": "3eb136d0b25fd016b55583c6701b6c7e1d43ef4ab86424d349bc670f664d79d7"
+    },
+    "copywriting": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/copywriting/SKILL.md",
+      "computedHash": "2bc8e2c94f812f6f2ac9035c3ae1d5d5ba5adad2a9ad3a20ed3a8596f39a6e07"
+    },
+    "frontend-design": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "b5b19bcbea637c95cd53aa51ff5216d952dc55b80249ded90941713481ede146"
+    },
+    "grill-me": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/grill-me/SKILL.md",
+      "computedHash": "abb0e94bf7ea50c00872f6fc532b3d4042f43580a568a15cb0e4f5265b6e175e"
+    },
+    "impeccable": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/impeccable/SKILL.md",
+      "computedHash": "c5de571b73930730cb0ed322d702cddd73852b2e1aea35e1f7fdabd58e2f236c"
+    },
+    "keep-it-working": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/keep-it-working/SKILL.md",
+      "computedHash": "27edce48e787e36da6192dbb3ad3eb98bb59291b19694a5ecb8d75da0e66f488"
+    },
+    "playwright": {
+      "source": "GrowthX-Club/build-sprint-skills",
+      "sourceType": "github",
+      "skillPath": "skills/playwright/SKILL.md",
+      "computedHash": "b1903d0b870061456fa458f3ce67f11f3b5cfaa71504394b56acd1906ed88918"
+    }
+  }
+}
