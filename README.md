@@ -1,6 +1,6 @@
 # Digital DSR — manager review and History trial
 
-The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. Dev includes inline correction, Confirm day, private account History and a manual Send to owner WhatsApp draft. There is no report-format selector, Excel option, separate supporting-record category form, owner approval, WhatsApp API or owner dashboard. Email/password sign-up is open; each account sees its own History. The owner accepted the dev interface; native WhatsApp opening and sending on a physical phone remain unverified. This step has not been deployed; production has not been changed by this work.
+The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. Dev includes inline correction, Confirm day, private account History and a manual Send to owner WhatsApp draft. There is no report-format selector, Excel option, separate supporting-record category form, owner approval, WhatsApp API or owner dashboard. Email/password sign-up is open; each account sees its own History. The owner accepted the dev interface and confirmed the real WhatsApp send works on 2026-10-11. This step has not been deployed; production has not been changed by this work.
 
 ## Phone test
 
