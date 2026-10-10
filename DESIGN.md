@@ -767,3 +767,44 @@ Status badges use 6px corners and 4px vertical / 8px horizontal padding; status 
 Do keep the selected photo's original contents, saved history and account isolation intact. Do communicate statuses with words as well as calm colours. Don't change financial meaning, infer approval, replace unavailable figures or extend this revision to other screens.
 
 **Recorded evidence:** Final development captures `.test-results/home-steps-390.png`, `.test-results/history-months-390.png`, `.test-results/redesign-home-320.png`, `.test-results/redesign-home-1280.png`, `.test-results/redesign-history-320.png` and `.test-results/redesign-history-1280.png`. Existing `.test-results/home-history-*-output.txt` reports record 59 unit tests, 21 phone-width browser tests, one WebKit date test and a passing build. These are development/browser checks, not real-phone, production or WhatsApp verification. No deployment, production operation, paid call, commit or progress change is part of this documentation handoff; no generated raster asset was added.
+
+## 9. Approved milestone — reachable confirmation and owner draft (development only)
+
+### Overview
+
+Keep the existing Inter, financial figures and calm surfaces. The manager can confirm from the bottom of the screen while reviewing a long report, then reach History and a manual WhatsApp draft without scrolling back to the top. This is an extension of the existing manager interface, not an owner screen. Opening WhatsApp does not mean the message was sent or the owner approved it.
+
+### Colors
+
+Use the existing white surface, soft border (#DCE4E2), slate text (#17212F), secondary text (#405453) and blue primary action (#1D4ED8). Keep the existing saved-check badge colours and thin card edges. Add no colours, illustrations or imagery.
+
+### Typography
+
+Keep Inter. Actions and draft figures use 16px; the short confirmation feedback, WhatsApp message disclosure and handoff explanation use 14px. Draft figures use tabular numerals and Indian ₹ formatting. Display the saved document date in the existing short English format. Missing amounts stay Not extracted; unresolved numeric readings keep their question mark. Original AI values are never substituted for a saved correction.
+
+### Layout
+
+The review action bar is fixed to the bottom, with a white surface and a 1px top border. Its content aligns to the existing 720px page width, with 12px vertical and 24px horizontal padding (16px horizontal at widths up to 350px). Account for the phone's bottom safe area. Reserve space equal to the measured bar height plus 24px below the report, so the last lines remain reachable. While editing a line, the disabled bar returns to normal page flow to leave the editor and keyboard clear.
+
+### Elevation & Depth
+
+Use the border alone; add no shadow or blur. The whole action bar is capped at 75svh and scrolls when its expanded draft is long. History retains its existing card surfaces and motion. Add no new animation.
+
+### Shapes
+
+Retain 8px action corners and at least 48px tap heights. Use native disclosure controls for message details; allow long labels and amounts to wrap without widening the page.
+
+### Components
+
+- **Review actions:** Confirm day is primary before saving. After saving, Send to owner is primary and View History sits beside it; Confirm day remains available as a secondary action. Confirmation feedback receives focus without moving the report. Keep all validation, correction locks and the replacement question unchanged.
+- **WhatsApp draft:** An expandable WhatsApp message preview contains the exact text encoded in the wa.me link: the saved document date, five saved DSR figures and saved uncertain/missing lines under Needs checking, including written totals once. The manager chooses the owner in WhatsApp and taps Send there. The link opens separately; the current report stays in the app.
+- **Saved-only sharing:** Load the confirmed version before showing its link. Hide the current draft while editing/checking and clear it when the date, photos, reading, corrections or context change. On failed or changed-version reads, show recovery without a share link. History cards and saved details use the same draft component and their already-loaded saved version.
+
+### Do's and Don'ts
+
+- Do keep the main action within one-handed reach, with details behind a tap.
+- Do show only saved figures and label unresolved amounts plainly.
+- Don't claim WhatsApp delivery, verification or owner approval from opening a draft.
+- Don't change AI reading, calculations, corrections, confirmation/replacement, login or saved data for this presentation work.
+
+Recorded development evidence: `.test-results/owner-review-{320,390,1280}.png` and `.test-results/owner-history-{320,390,1280}.png`, using fabricated records. The final source-stable run passed 64 unit tests, 27 phone-width browser tests and the local build, recorded in `.test-results/owner-{unit,phone,build}-output.txt`. Browser screenshots and link checks do not prove native WhatsApp opening or delivery on a physical phone. No deployment, paid scan or production operation is part of this milestone.

@@ -138,3 +138,27 @@ nav [aria-current="page"] { font-weight:700; }
 .history-card[data-status="check"] .day-badge { color: #8A5A00; background: #FFF7E6; }
 .history-card[data-status="incomplete"] { border-left: 2px solid #55616B; }
 .history-card[data-status="incomplete"] .day-badge { color: #55616B; background: #EEF1F3; }
+/* Review actions stay within reach; only the current saved version can be shared. */
+.review-actions { position: fixed; inset: auto 0 0; z-index: 10; max-height: 75svh; overflow-y: auto; background: #FFFFFF; border-top: 1px solid #DCE4E2; padding-bottom: env(safe-area-inset-bottom,0px); }
+.review-actions-inner { max-width: 720px; margin: auto; padding: 12px 24px; }
+.review-actions-inner > p { margin: 0 0 8px; font-size: 14px; }
+.review-buttons { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 8px 12px; }
+.review-buttons > * { min-width: 0; grid-column: 1 / -1; }
+.review-buttons .share-slot, .review-buttons .owner-sharing { display: contents; }
+.review-buttons[data-confirmed="true"] .owner-share-link { grid-column: 1; grid-row: 1; }
+.review-buttons[data-confirmed="true"] .view-history { grid-column: 2; grid-row: 1; }
+.review-buttons[data-confirmed="true"] .owner-draft { grid-column: 1; grid-row: 2; margin: 0; }
+.review-buttons[data-confirmed="true"] .confirm-day { grid-column: 2; grid-row: 2; }
+.review-buttons[data-confirmed="true"] .owner-draft[open] { grid-column: 1 / -1; }
+.review-buttons[data-confirmed="true"]:has(.owner-draft[open]) .confirm-day { grid-column: 1 / -1; grid-row: 3; }
+.review-actions.editing { position: static; margin-top: 24px; max-height: none; }
+.review-actions.editing .review-actions-inner { padding-inline: 0; }
+.owner-sharing { margin-top: 20px; min-width: 0; }
+.owner-share-link { display: flex; align-items: center; justify-content: center; min-height: 48px; font: inherit; text-align: center; text-decoration: none; }
+.owner-share-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.owner-share-link:focus-visible { outline: 2px solid #17212F; outline-offset: 4px; }
+.owner-draft { margin-top: 8px; min-width: 0; }
+.owner-draft summary { font-size: 14px; color: #405453; padding: 12px 0; }
+.owner-draft pre { margin: 12px 0; font-variant-numeric: tabular-nums; color: #17212F; }
+.owner-draft p { font-size: 14px; color: #405453; }
+@media(max-width: 350px) { .review-actions-inner { padding-inline: 16px; } }

@@ -1,6 +1,6 @@
 # Digital DSR — manager review and History trial
 
-The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. The current dev step adds inline correction, Confirm day and History. There is no report-format selector, Excel option, separate supporting-record category form, owner approval, WhatsApp or owner dashboard. Dev now requires manager email/password sign-in, with open sign-up. The owner confirmed this step works on dev. Production remains the previous deployed version; deployment of this step has not been authorised.
+The manager chooses the Reporting date, adds DSR photos in their own area, and adds guest bills, food bills, UPI records and expense photos under Other photos. Dev includes inline correction, Confirm day, private account History and a manual Send to owner WhatsApp draft. There is no report-format selector, Excel option, separate supporting-record category form, owner approval, WhatsApp API or owner dashboard. Email/password sign-up is open; each account sees its own History. The owner accepted the dev interface; native WhatsApp opening and sending on a physical phone remain unverified. This step has not been deployed; production has not been changed by this work.
 
 ## Phone test
 
@@ -54,6 +54,16 @@ The AI reads roles, names, purpose, dates and references; code establishes conne
 Repeated explicit bill/transaction references count once; conflicting copies or possible duplicates without identifying references leave comparisons incomplete. Overlapping DSR photos cannot produce a complete match. Guest cash and UPI are compared separately; advances/refunds are displayed separately. A context answer may classify or link an existing line, but cannot change its amount/date/source or turn a repeated written total into another transaction. The comparison endpoint uses the current raw reading plus your answers, validates them again and performs no provider call, storage write or quota mutation. Answers are temporary and reset for new photos, a new date or a fresh scan.
 
 The comparison response schema restricts DSR classifications by upload source and uses the documented nested `anyOf` form from the [OpenAI Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs). No paid real-photo test has been run for this new schema/instruction set; simulated checks prove calculations and the browser flow, not OCR accuracy. There are no automatic AI retries. The larger response cap permits longer replies and can increase scan cost; no production cap/cost has been verified.
+
+## Send to owner (dev only)
+
+After reviewing the extracted lines, tap Confirm day in the bottom action bar. It stays within reach while scrolling, moves out of the way while editing a line, and retains the same validation and replacement prompt. After the save, View History is available beside Send to owner; there is no need to scroll back to the top.
+
+Send to owner opens `https://wa.me/?text=...` with a draft from the saved report version. The draft contains its document date, Room revenue, Food revenue, Guest cash, Guest UPI and Expenses from the existing saved DSR checks, plus all saved missing or uncertain amounts under Needs checking. Corrected values and labels take precedence; resolved uncertainty is not restored from the original AI reading. Written totals are flagged once, without adding them again. A missing summary amount remains Not extracted. The expandable WhatsApp message preview shows exactly the text in the link.
+
+Choose the owner in WhatsApp and tap Send yourself. The app does not know the owner's number, contact WhatsApp's API, automatically send, or claim delivery/approval. Opening a draft is not proof that it was sent. Each History card and its saved detail view also offer the draft. Links appear only after loading the same saved version used by the card or confirmation; failed or changed-version reads offer retry/History instead. Editing context or corrections, changing dates/photos or scanning again clears the current confirmation's share draft until it is confirmed again.
+
+For a free phone check, keep `npm run dev -- --host 0.0.0.0` running on the laptop, connect both devices to the same Wi-Fi, and open `http://192.168.1.4:5173`. Sign in to the account with your saved day, open History, expand WhatsApp message, and tap Send to owner. Check the date, five figures and Needs checking in WhatsApp before sending. Confirm-day reachability can be checked the next time you normally scan; this build's browser tests use fabricated provider responses and make no paid AI calls. Browser proof checks the encoded draft and handoff link; it cannot prove that WhatsApp installed on your physical phone opened or sent it. No production operation or deployment is part of this work.
 
 ## Manager sign-in (dev only)
 

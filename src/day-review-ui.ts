@@ -1,5 +1,6 @@
 import { displayDate, displayTime, displayMonth } from './date-display';
 import { historySummary, historyStatus } from './history-summary';
+import {ownerSharing} from './owner-share-ui';
 import { authenticatedFetch } from './session';
 import { displayAmount, displayLineAmount, sections, type DsrLine } from './extraction';
 import { applyCorrections, checkWord, parseAmount, prepareDay, type Correction, type SavedDay, type SavedLine } from './confirmed-day';
@@ -15,6 +16,8 @@ export class DayReview {
   private manager=el('section');private history=el('section');private content=el('div');
   private navHistory:HTMLButtonElement;private navUpload:HTMLButtonElement;
   private confirmButton:HTMLButtonElement;private confirmStatus=el('p');private confirmError=el('p');
+  private panel=el('section');private shareSlot=el('div');private viewHistory:HTMLButtonElement;private hint=el('p','Review the lines, then confirm.');private actionButtons=el('div');
+  private shareRequest=0;private confirmed:{state:ReviewState;signature:string;date:string;version:string}|null=null;
   private active:string|null=null;private saving=false;private historyRequest=0;private latestRequest=0;
   constructor(private deps:Deps){
     const app=document.getElementById('app')!;
@@ -25,22 +28,48 @@ export class DayReview {
     const heading=el('h1','History');heading.tabIndex=-1;
     this.history.append(heading,el('p','Confirmed days, newest first. Saved days are private to your account. Photos are not saved.'),this.content);
     app.append(nav,this.manager,this.history);
-    const panel=el('section');panel.id='confirmation';panel.hidden=true;
-    this.confirmButton=button('Confirm day',()=>{void this.confirm();});this.confirmButton.className='primary-action';
+    const panel=this.panel;panel.id='confirmation';panel.className='review-actions';panel.hidden=true;
+    this.confirmButton=button('Confirm day',()=>{void this.confirm();});this.confirmButton.className='primary-action confirm-day';
+    this.viewHistory=button('View History',()=>{void this.showHistory();});this.viewHistory.classList.add('view-history');this.viewHistory.hidden=true;
+    this.shareSlot.className='share-slot';this.actionButtons.className='review-buttons';
     this.confirmStatus.setAttribute('role','status');this.confirmError.setAttribute('role','alert');this.confirmError.className='form-error';this.confirmError.hidden=true;
-    panel.append(el('p','Confirm the reviewed lines for this document date. Missing amounts and unresolved differences stay flagged.'),this.confirmButton,this.confirmStatus,this.confirmError);
-    document.getElementById('results')!.append(panel);this.showUpload();
+    this.confirmStatus.tabIndex=-1;this.actionButtons.append(this.shareSlot,this.viewHistory,this.confirmButton);
+    const inner=el('div');inner.className='review-actions-inner';inner.append(this.hint,this.confirmStatus,this.confirmError,this.actionButtons);panel.append(inner);
+    document.getElementById('results')!.append(el('p','Confirm the reviewed lines for this document date. Missing amounts and unresolved differences stay flagged.'));
+    this.manager.append(panel);new ResizeObserver(()=>this.updateInset()).observe(panel);this.showUpload();
   }
   busy(){return this.saving||this.active!==null;}
-  reset(){this.active=null;this.confirmStatus.textContent='';this.confirmError.hidden=true;document.getElementById('confirmation')!.hidden=true;this.sync();}
+  reset(){this.active=null;this.clearShare();this.confirmStatus.textContent='';this.confirmError.hidden=true;this.panel.hidden=true;this.sync();}
+  private signature(state:ReviewState){return JSON.stringify([state.corrections,state.choices]);}
+  private clearShare(){this.confirmed=null;this.shareRequest++;this.shareSlot.replaceChildren();this.actionButtons.removeAttribute('data-confirmed');}
+  private updateInset(){const height=this.panel.hidden||this.manager.hidden||this.active!==null?0:this.panel.getBoundingClientRect().height;this.manager.style.paddingBottom=height?`${height+24}px`:'';}
   sync(){
-    const state=this.deps.state();this.confirmButton.disabled=this.saving||this.active!==null||this.deps.busy()||!!state?.updating;
+    const state=this.deps.state();if(this.confirmed&&(state!==this.confirmed.state||this.signature(state)!==this.confirmed.signature)){this.clearShare();this.confirmStatus.textContent='Review the changed lines, then confirm again.';}
+    const locked=this.saving||this.active!==null||this.deps.busy()||!!state?.updating;
+    this.confirmButton.disabled=locked;
     this.confirmButton.textContent=this.saving?'Saving day…':'Confirm day';
+    this.confirmButton.className=`confirm-day ${this.confirmed?'secondary':'primary-action'}`;
     this.navHistory.disabled=this.saving||this.deps.busy()||!!state?.updating;
-    document.getElementById('confirmation')!.hidden=!state;
+    this.viewHistory.hidden=!this.confirmed;this.viewHistory.disabled=locked;this.shareSlot.hidden=locked;
+    this.hint.hidden=!!this.confirmed||!!this.confirmStatus.textContent;this.confirmStatus.hidden=!this.confirmStatus.textContent;
+    this.panel.hidden=!state;this.panel.classList.toggle('editing',this.active!==null);this.updateInset();
     document.querySelectorAll<HTMLButtonElement>('[data-correct]').forEach(button=>{button.disabled=this.saving||this.active!==null||this.deps.busy()||!!state?.updating;});
   }
-  showUpload(){this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');void this.loadLatest();}
+  showUpload(){this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');this.updateInset();void this.loadLatest();}
+  private async loadShare(){
+    const receipt=this.confirmed;if(!receipt)return;const request=++this.shareRequest;
+    this.actionButtons.removeAttribute('data-confirmed');this.shareSlot.replaceChildren(el('p','Loading saved WhatsApp draft…'));
+    try{
+      const {day}=await this.request(`/days/detail?date=${encodeURIComponent(receipt.date)}`) as {day:SavedDay};
+      if(request!==this.shareRequest||this.confirmed!==receipt)return;
+      if(day.date!==receipt.date||day.version!==receipt.version)throw new Error('This saved day changed. Open History for the latest version.');
+      this.shareSlot.replaceChildren(ownerSharing(day,true));this.actionButtons.dataset.confirmed='true';this.sync();
+    }catch(cause){
+      if(request!==this.shareRequest||this.confirmed!==receipt)return;
+      const message=el('p',cause instanceof Error?cause.message:'The saved WhatsApp draft could not be loaded. Try again.');message.setAttribute('role','alert');
+      this.shareSlot.replaceChildren(message,button('Retry message',()=>{void this.loadShare();}));this.sync();
+    }
+  }
   private async loadLatest(){
     const request=++this.latestRequest,line=document.getElementById('last-confirmed');if(!line)return;
     line.replaceChildren(el('span','Last confirmed: Loading…'));
@@ -111,9 +140,10 @@ export class DayReview {
         if(!window.confirm('Replace the saved day?')){this.confirmStatus.textContent='Saved day kept. Your current corrections are still here.';return;}
         body.expectedVersion=result.version;result=await this.request('/days/confirm',body);
       }
-      this.confirmStatus.textContent=`Day confirmed and saved — ${displayDate(state.reading.date)}.`;this.navHistory.focus();void this.loadLatest();
+      this.clearShare();this.confirmed={state,signature:this.signature(state),date:state.reading.date,version:result.version};
+      this.confirmStatus.textContent=`Day confirmed and saved — ${displayDate(state.reading.date)}.`;void this.loadLatest();
     }catch(cause){this.confirmError.textContent=cause instanceof Error?cause.message:'Your day could not be confirmed. Try again.';this.confirmError.hidden=false;}
-    finally{this.saving=false;this.deps.refreshControls();this.sync();}
+    finally{this.saving=false;this.deps.refreshControls();this.sync();if(this.confirmed){this.confirmStatus.focus({preventScroll:true});void this.loadShare();}}
   }
   async showHistory(){
     if(this.saving||this.deps.busy())return;
@@ -137,7 +167,7 @@ export class DayReview {
           const stamp=el('p',`Confirmed: ${time(day.confirmedAt)}`);stamp.className='day-stamp';
           const values=el('dl');values.className='day-metrics';values.setAttribute('aria-label',`Saved DSR amounts for ${displayDate(day.date)}`);
           const message=el('p','Loading saved amounts…');message.className='card-status';
-          item.append(header,stamp,values,message);list.append(item);
+          const sharing=el('div');item.append(header,stamp,values,message,sharing);list.append(item);
           const load=async()=>{
             try{
               const {day:saved}=await this.request(`/days/detail?date=${encodeURIComponent(day.date)}`) as {day:SavedDay};
@@ -146,6 +176,7 @@ export class DayReview {
               values.replaceChildren(...historySummary(saved).map(metric=>{const row=el('div');row.append(el('dt',metric.label),el('dd',metric.value));return row;}));
               const status=historyStatus(saved);badge.textContent=status.label;badge.hidden=false;item.dataset.status=status.tone;
               message.textContent='Saved DSR figures · Open the date for lines and checks.';
+              sharing.replaceChildren(ownerSharing(saved));
             }catch(cause){
               if(request!==this.historyRequest)return;
               message.textContent=cause instanceof Error?cause.message:'Saved amounts could not be loaded.';
@@ -176,6 +207,7 @@ export class DayReview {
       if(request!==this.historyRequest)return;
       const heading=el('h2',`Confirmed day — ${displayDate(day.date)}`);heading.tabIndex=-1;
       this.content.replaceChildren(heading,el('p',`Confirmed: ${time(day.confirmedAt)}`),button('Back to History',()=>{void this.showHistory();}));
+      this.content.append(ownerSharing(day));
       const checks=el('section');checks.append(el('h2','Matches / Differs'));
       for(const check of day.checks){const row=el('div');row.className='comparison-row';row.append(el('h3',check.title),el('p',checkWord(check.status)),el('p',`DSR: ${displayAmount(check.dsr)}`),el('p',`Supporting records: ${displayAmount(check.evidence)}`),el('p',`Difference: ${displayAmount(check.difference)}`));if(check.status==='Difference')row.classList.add('difference');checks.append(row);}
       this.content.append(checks);
