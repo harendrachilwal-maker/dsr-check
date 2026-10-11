@@ -16,6 +16,7 @@ import type * as http from "../http.js";
 import type * as limits from "../limits.js";
 import type * as managerAccess from "../managerAccess.js";
 import type * as records from "../records.js";
+import type * as salesMoneyCheck from "../salesMoneyCheck.js";
 
 import type {
   ApiFromModules,
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   limits: typeof limits;
   managerAccess: typeof managerAccess;
   records: typeof records;
+  salesMoneyCheck: typeof salesMoneyCheck;
 }>;
 
 /**

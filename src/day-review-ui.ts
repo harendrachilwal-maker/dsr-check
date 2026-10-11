@@ -1,9 +1,11 @@
 import { displayDate, displayTime, displayMonth } from './date-display';
 import { historySummary, historyStatus } from './history-summary';
 import {ownerSharing} from './owner-share-ui';
+import {dayReceipt} from './day-receipt';
+import {salesMoneyPresentation} from './sales-money';
 import { authenticatedFetch } from './session';
-import { displayAmount, displayLineAmount, sections, type DsrLine } from './extraction';
-import { applyCorrections, checkWord, parseAmount, prepareDay, type Correction, type SavedDay, type SavedLine } from './confirmed-day';
+import { displayAmount, displayLineAmount, type DsrLine } from './extraction';
+import { applyCorrections, parseAmount, prepareDay, type Correction, type SavedDay } from './confirmed-day';
 import { type Reading, type Choice } from './comparison';
 
 export type ReviewState={raw:unknown;reading:Reading;choices:Choice[];corrections:Correction[];updating:boolean};
@@ -11,7 +13,6 @@ type Deps={endpoint:string;state:()=>ReviewState|null;photos:()=>{url:string}[];
 const el=<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
 const button=(text:string,click:()=>void)=>{const node=el('button',text);node.type='button';node.className='secondary';node.onclick=click;return node;};
 const time=displayTime;
-const savedAmount=(line:SavedLine)=>{const amount=Object.hasOwn(line,'correctedValue')?line.correctedValue!:line.aiValue;return displayAmount(amount)+(line.unclear&&amount!==null?'?':'');};
 export class DayReview {
   private manager=el('section');private history=el('section');private content=el('div');
   private navHistory:HTMLButtonElement;private navUpload:HTMLButtonElement;
@@ -166,8 +167,9 @@ export class DayReview {
           const header=el('div');header.className='day-card-header';header.append(open,badge);
           const stamp=el('p',`Confirmed: ${time(day.confirmedAt)}`);stamp.className='day-stamp';
           const values=el('dl');values.className='day-metrics';values.setAttribute('aria-label',`Saved DSR amounts for ${displayDate(day.date)}`);
+          const salesMoney=el('div');salesMoney.className='sales-money-check';salesMoney.hidden=true;salesMoney.setAttribute('aria-label','Sales vs money');
           const message=el('p','Loading saved amounts…');message.className='card-status';
-          const sharing=el('div');item.append(header,stamp,values,message,sharing);list.append(item);
+          const sharing=el('div');item.append(header,stamp,values,salesMoney,message,sharing);list.append(item);
           const load=async()=>{
             try{
               const {day:saved}=await this.request(`/days/detail?date=${encodeURIComponent(day.date)}`) as {day:SavedDay};
@@ -177,8 +179,11 @@ export class DayReview {
               const status=historyStatus(saved);badge.textContent=status.label;badge.hidden=false;item.dataset.status=status.tone;
               message.textContent='Saved DSR figures · Open the date for lines and checks.';
               sharing.replaceChildren(ownerSharing(saved));
+              const check=salesMoneyPresentation(saved.salesMoneyCheck),checkBadge=el('span',check.label);checkBadge.className='sales-money-badge';
+              salesMoney.replaceChildren(el('span','Sales vs money'),checkBadge,...(check.detail?[el('span',check.detail)]:[]));salesMoney.dataset.tone=check.tone;salesMoney.hidden=false;
             }catch(cause){
               if(request!==this.historyRequest)return;
+              salesMoney.hidden=true;salesMoney.replaceChildren();
               message.textContent=cause instanceof Error?cause.message:'Saved amounts could not be loaded.';
               message.setAttribute('role','alert');const retry=button('Retry amounts',()=>{retry.remove();message.textContent='Loading saved amounts…';void load();});item.append(retry);
             }
@@ -195,7 +200,7 @@ export class DayReview {
   }
   private async changeView(change:()=>void){
     if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&document.startViewTransition){
-      try{await document.startViewTransition(change).updateCallbackDone;}catch{change();}
+      try{await document.startViewTransition(change).finished;}catch{change();}
     }else change();
   }
   private historyError(cause:unknown,retry:()=>void){const message=el('p',cause instanceof Error?cause.message:'History could not be loaded. Try again.');message.className='form-error';message.setAttribute('role','alert');this.content.replaceChildren(message,button('Retry',retry));}
@@ -205,23 +210,8 @@ export class DayReview {
       const {day}=await this.request(`/days/detail?date=${encodeURIComponent(date)}`) as {day:SavedDay};if(request!==this.historyRequest)return;
       await this.changeView(()=>{
       if(request!==this.historyRequest)return;
-      const heading=el('h2',`Confirmed day — ${displayDate(day.date)}`);heading.tabIndex=-1;
-      this.content.replaceChildren(heading,el('p',`Confirmed: ${time(day.confirmedAt)}`),button('Back to History',()=>{void this.showHistory();}));
-      this.content.append(ownerSharing(day));
-      const checks=el('section');checks.append(el('h2','Matches / Differs'));
-      for(const check of day.checks){const row=el('div');row.className='comparison-row';row.append(el('h3',check.title),el('p',checkWord(check.status)),el('p',`DSR: ${displayAmount(check.dsr)}`),el('p',`Supporting records: ${displayAmount(check.evidence)}`),el('p',`Difference: ${displayAmount(check.difference)}`));if(check.status==='Difference')row.classList.add('difference');checks.append(row);}
-      this.content.append(checks);
-      for(const doc of day.aiReading.documents){
-        const group=el('section');group.append(el('h2',`Photo ${doc.source} — ${doc.kind}`),el('p',`Document date: ${displayDate(doc.date)}`));
-        for(const section of [...sections,null]){
-          const lines=day.lines.filter(line=>line.source===doc.source&&line.section===section);if(!lines.length)continue;
-          group.append(el('h3',section??'Section not extracted'));const list=el('dl');
-          for(const line of lines){const row=el('div');row.append(el('dt',line.label??'Not extracted'),el('dd',savedAmount(line)),el('p',`AI label: ${line.aiLabel??'Not extracted'}`),el('p',`AI value: ${displayAmount(line.aiValue)}${line.aiUnclear&&line.aiValue!==null?'?':''}`));if(Object.hasOwn(line,'correctedValue'))row.append(el('p',`Corrected value: ${displayAmount(line.correctedValue!)}`));if(line.correctedLabel!==undefined)row.append(el('p',`Corrected label: ${line.correctedLabel}`));if(line.writtenTotal)row.append(el('p','Written total — not added again.'));if(line.unclear)row.append(el('p','Unclear — remains flagged.'));list.append(row);}
-          group.append(list);
-        }this.content.append(group);
-      }
-      const totals=el('section');totals.append(el('h2','Written totals'));if(!day.writtenTotals.length)totals.append(el('p','Not extracted'));
-      for(const line of day.writtenTotals)totals.append(el('p',`Photo ${line.source} — ${line.label??'Not extracted'}: ${savedAmount(line)}`));this.content.append(totals);
+      const {receipt,heading}=dayReceipt(day);
+      this.content.replaceChildren(receipt,button('Back to History',()=>{void this.showHistory();}),ownerSharing(day));
       heading.focus();
       });
     }catch(cause){if(request!==this.historyRequest)return;this.historyError(cause,()=>{void this.openDay(date);});}

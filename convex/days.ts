@@ -2,6 +2,7 @@ import { internalMutation, internalQuery } from './_generated/server';
 import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import { daySnapshot, savedDay, historyResult, dayReference } from './dayValidators';
+import { salesMoneyCheck } from './salesMoneyCheck';
 
 export const confirm=internalMutation({
   args:{scope:v.string(),snapshot:daySnapshot,expectedVersion:v.union(v.id('confirmedVersions'),v.null())},
@@ -37,6 +38,6 @@ export const detail=internalQuery({
     const day=await ctx.db.query('confirmedDays').withIndex('by_scope_date',q=>q.eq('scope',scope).eq('date',date)).unique();
     if(!day)return null;
     const version=await ctx.db.get(day.version);
-    return version?{...version.snapshot,confirmedAt:version.confirmedAt,version:version._id}:null;
+    return version?{...version.snapshot,confirmedAt:version.confirmedAt,version:version._id,salesMoneyCheck:salesMoneyCheck(version.snapshot)}:null;
   },
 });

@@ -44,8 +44,12 @@ test('numbered steps, thumbnails, latest confirmation and all three saved status
  ]);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'.test-results/history-months-390.png',fullPage:true});
- await page.getByRole('button',{name:'10 Oct 2026',exact:true}).click();await expect(page.getByRole('heading',{name:'Confirmed day — 10 Oct 2026',exact:true})).toBeFocused();
- await expect(page.locator('#history-page')).toContainText('Differs');await page.getByRole('button',{name:'Back to History',exact:true}).click();await expect(page.locator('.day-badge')).toHaveText(['Matches','Check','Not enough info']);
+ const detail=page.waitForResponse(response=>new URL(response.url()).pathname==='/days/detail'&&new URL(response.url()).searchParams.get('date')==='2026-10-10');
+ await page.getByRole('button',{name:'10 Oct 2026',exact:true}).click();const response=await detail;expect(response.status()).toBe(200);const {day}=await response.json();
+ expect(day.date).toBe('2026-10-10');expect(day.checks.some((check:{status:string})=>check.status==='Difference')).toBe(true);
+ await expect(page.getByRole('heading',{name:'Confirmed day — 10 Oct 2026',exact:true})).toBeFocused();
+ await expect(page.locator('.receipt-amounts dd')).toHaveText(['₹12,500','₹3,750','₹4,000','₹12,250','₹21,000']);await expect(page.locator('.day-receipt .sales-money-badge')).toHaveText('Matches');
+ await page.getByRole('button',{name:'Back to History',exact:true}).click();await expect(page.locator('.day-badge')).toHaveText(['Matches','Check','Not enough info']);
  await page.getByRole('button',{name:'Upload DSR',exact:true}).click();await expect(page.locator('#last-confirmed')).toHaveText('Last confirmed: 10 Oct 2026');await expect(thumbnails).toHaveCount(2);
  await page.getByRole('button',{name:'Remove photo 1: fabricated-dsr.png',exact:true}).click();await expect(thumbnails).toHaveCount(1);
 });

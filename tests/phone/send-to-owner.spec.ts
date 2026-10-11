@@ -3,6 +3,8 @@ import {makeRaw,comparisonDate as date,comparisonDocuments,comparisonContexts} f
 import {comparisonReadingFromRaw,buildComparison} from '../../src/comparison';
 import {ownerMessage} from '../../src/owner-message';
 import type {SavedDay} from '../../src/confirmed-day';
+import {ownerReading,missingUpiMessage,octoberOwnerReading,octoberOwnerDate,octoberOwnerMessage} from '../owner-message-fixture';
+import {writeFile} from 'node:fs/promises';
 
 function fabricatedReading(){
  const docs=structuredClone(comparisonDocuments),contexts=structuredClone(comparisonContexts);
@@ -96,4 +98,46 @@ test('a late saved draft cannot return after the manager changes the reporting d
  await page.getByLabel('Reporting date',{exact:true}).fill('2026-11-03');
  const returned=page.waitForResponse('**/days/detail?date=*');release();await returned;
  await expect(page.getByRole('link',{name:'Send to owner',exact:true})).toHaveCount(0);await expect(page.locator('#confirmation')).not.toBeVisible();
+});
+
+test('missing UPI appears once in the confirmed owner draft and saved History message at 390px',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ const raw=ownerReading();let calls=0;
+ await page.route('**/extract',route=>{calls++;return route.fulfill({contentType:'application/json',body:JSON.stringify({mode:'compare',raw,comparison:buildComparison(comparisonReadingFromRaw(raw,date,[1],[1]))})});});
+ await page.getByLabel('Reporting date',{exact:true}).fill(date);
+ await page.locator('#photo').setInputFiles({name:'fabricated-missing-upi.png',mimeType:'image/png',buffer:await page.screenshot()});
+ await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();
+ await expect(page.locator('#results')).toBeVisible();await page.getByRole('button',{name:'Confirm day',exact:true}).click();
+ const confirmation=page.locator('#confirmation');await expect(confirmation.getByRole('link',{name:'Send to owner',exact:true})).toBeVisible();
+ await confirmation.locator('summary').click();await expect(confirmation.locator('pre')).toHaveText(missingUpiMessage);
+ expect(new URL((await confirmation.getByRole('link',{name:'Send to owner',exact:true}).getAttribute('href'))!).searchParams.get('text')).toBe(missingUpiMessage);
+ await page.getByRole('button',{name:'View History',exact:true}).click();
+ const card=page.locator('.history-card');await expect(card.getByRole('link',{name:'Send to owner',exact:true})).toBeVisible();
+ await card.locator('summary').click();await expect(card.locator('pre')).toHaveText(missingUpiMessage);
+ expect(new URL((await card.getByRole('link',{name:'Send to owner',exact:true}).getAttribute('href'))!).searchParams.get('text')).toBe(missingUpiMessage);
+ await writeFile('.test-results/owner-missing-upi-message.txt',(await card.locator('pre').textContent())!);
+ await page.evaluate(async()=>{scrollTo(0,0);await document.fonts.ready;});
+ await page.screenshot({path:'.test-results/owner-missing-upi-390.png',fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(calls).toBe(1);
+});
+
+test('10 Oct 2026 owner draft merges unclassified UPI and keeps OTA PAY after confirmation and in History',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ const raw=octoberOwnerReading();let calls=0;
+ await page.route('**/extract',route=>{calls++;return route.fulfill({contentType:'application/json',body:JSON.stringify({mode:'compare',raw,comparison:buildComparison(comparisonReadingFromRaw(raw,octoberOwnerDate,[1],[1]))})});});
+ await page.getByLabel('Reporting date',{exact:true}).fill(octoberOwnerDate);
+ await page.locator('#photo').setInputFiles({name:'fabricated-october-aliases.png',mimeType:'image/png',buffer:await page.screenshot()});
+ await page.getByRole('button',{name:'Start AI Scanning',exact:true}).click();
+ await expect(page.locator('#results')).toBeVisible();await page.getByRole('button',{name:'Confirm day',exact:true}).click();
+ const confirmation=page.locator('#confirmation');await expect(confirmation.getByRole('link',{name:'Send to owner',exact:true})).toBeVisible();
+ await confirmation.locator('summary').click();await expect(confirmation.locator('pre')).toHaveText(octoberOwnerMessage);
+ expect(new URL((await confirmation.getByRole('link',{name:'Send to owner',exact:true}).getAttribute('href'))!).searchParams.get('text')).toBe(octoberOwnerMessage);
+ await page.getByRole('button',{name:'View History',exact:true}).click();
+ const card=page.locator('.history-card');await expect(card.getByRole('link',{name:'Send to owner',exact:true})).toBeVisible();
+ await card.locator('summary').click();await expect(card.locator('pre')).toHaveText(octoberOwnerMessage);
+ expect(new URL((await card.getByRole('link',{name:'Send to owner',exact:true}).getAttribute('href'))!).searchParams.get('text')).toBe(octoberOwnerMessage);
+ await writeFile('.test-results/owner-alias-october-message.txt',(await card.locator('pre').textContent())!);
+ await page.evaluate(async()=>{scrollTo(0,0);await document.fonts.ready;});
+ await page.screenshot({path:'.test-results/owner-alias-october-390.png',fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(calls).toBe(1);
 });

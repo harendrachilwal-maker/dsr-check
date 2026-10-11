@@ -138,6 +138,12 @@ nav [aria-current="page"] { font-weight:700; }
 .history-card[data-status="check"] .day-badge { color: #8A5A00; background: #FFF7E6; }
 .history-card[data-status="incomplete"] { border-left: 2px solid #55616B; }
 .history-card[data-status="incomplete"] .day-badge { color: #55616B; background: #EEF1F3; }
+.sales-money-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 20px; font-size: 14px; }
+.sales-money-check[hidden] { display: none; }
+.sales-money-badge { flex: none; border-radius: 6px; padding: 4px 8px; font-size: 14px; line-height: 1.5; font-weight: 700; }
+.sales-money-check[data-tone="matches"] .sales-money-badge { color: #276749; background: #ECF5EF; }
+.sales-money-check[data-tone="check"] .sales-money-badge { color: #8A5A00; background: #FFF7E6; }
+.sales-money-check[data-tone="incomplete"] .sales-money-badge { color: #55616B; background: #EEF1F3; }
 /* Review actions stay within reach; only the current saved version can be shared. */
 .review-actions { position: fixed; inset: auto 0 0; z-index: 10; max-height: 75svh; overflow-y: auto; background: #FFFFFF; border-top: 1px solid #DCE4E2; padding-bottom: env(safe-area-inset-bottom,0px); }
 .review-actions-inner { max-width: 720px; margin: auto; padding: 12px 24px; }
@@ -162,3 +168,26 @@ nav [aria-current="page"] { font-weight:700; }
 .owner-draft pre { margin: 12px 0; font-variant-numeric: tabular-nums; color: #17212F; }
 .owner-draft p { font-size: 14px; color: #405453; }
 @media(max-width: 350px) { .review-actions-inner { padding-inline: 16px; } }
+
+/* Only an opened saved day uses the receipt surface; its pattern has separate empty bands. */
+.day-receipt { width: 100%; max-width: 540px; margin: 0 auto 24px; padding: 24px 20px; border: 1px solid #DED7C8; border-radius: 12px; background: #FAF7EF; color: #17212F; text-align: center; }
+.day-receipt ::selection { background: #DED7C8; color: #17212F; }
+.day-receipt .receipt-pattern { display: block; width: 100%; height: 24px; fill: none; stroke: #B6A480; stroke-width: .45px; opacity: .24; }
+.day-receipt header { margin: 24px 0 32px; }
+.day-receipt .receipt-hotel { margin: 0 auto 12px; max-width: 22ch; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; line-height: 1.25; font-weight: 400; text-wrap: balance; }
+.day-receipt .receipt-date { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 20px; line-height: 1.3; font-weight: 400; }
+.day-receipt .receipt-date:focus-visible { outline: 2px solid #17212F; outline-offset: 4px; }
+.day-receipt .receipt-amounts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px 16px; margin: 0; }
+.day-receipt .receipt-amounts > div { min-width: 0; padding: 0; border: 0; }
+.day-receipt .receipt-amounts > div:last-child { grid-column: 1 / -1; padding-top: 24px; border-top: 1px solid #DED7C8; }
+.day-receipt .receipt-amounts dt { color: #655F55; font-size: 14px; font-weight: 400; }
+.day-receipt .receipt-amounts dd { margin: 8px 0 0; font-family: Inter, sans-serif; font-size: 24px; font-weight: 700; line-height: 1.25; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.day-receipt .receipt-amounts .receipt-not-read { color: #655F55; font-size: 14px; font-weight: 400; line-height: 1.5; letter-spacing: normal; }
+.day-receipt .sales-money-check { justify-content: center; margin: 24px 0 0; padding: 24px 0 0; border-top: 1px solid #DED7C8; }
+.day-receipt .receipt-needs { margin: 28px 0; }
+.day-receipt .receipt-needs h3 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
+.day-receipt .receipt-needs ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.day-receipt .receipt-needs li, .day-receipt .receipt-needs p { margin: 0; color: #655F55; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.day-receipt .receipt-confirmation { margin: 24px 0 0; }
+.day-receipt .receipt-confirmation p { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
+.day-receipt .receipt-confirmation time { display: block; color: #655F55; font-size: 14px; line-height: 1.5; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

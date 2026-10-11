@@ -1,7 +1,9 @@
 import { displayDate } from '../../src/date-display';
 import {test,expect} from './manager-fixture';
 import {makeRaw,comparisonDate as date,comparisonContexts,comparisonDocuments} from '../comparison-fixture';
-for(const width of [320,390,1280])test(`saved financial cards and unchanged day view at ${width}px`,async({page,request})=>{
+import {comparisonReadingFromRaw} from '../../src/comparison';
+import {prepareDay,type SavedDay} from '../../src/confirmed-day';
+for(const width of [320,390,1280])test(`saved financial cards and saved-only receipt at ${width}px`,async({page,request})=>{
  await page.setViewportSize({width,height:844});await page.goto('/');
  await expect(page.getByRole('button',{name:'Add DSR Photos',exact:true})).toBeVisible();
  await expect(page.locator('#last-confirmed')).toHaveText('Last confirmed: None yet');
@@ -19,8 +21,12 @@ for(const width of [320,390,1280])test(`saved financial cards and unchanged day 
  await expect(card.locator('dd')).toHaveText(['₹12,500','₹3,750','₹4,000','₹12,250','₹21,000']);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:`.test-results/redesign-history-${width}.png`,fullPage:true});
- await card.getByRole('button',{name:displayDate(date),exact:true}).click();await expect(page.getByRole('heading',{name:`Confirmed day — ${displayDate(date)}`,exact:true})).toBeFocused();
- await expect(page.locator('#history-page')).toContainText('Written totals');await page.getByRole('button',{name:'Back to History',exact:true}).click();await expect(card.locator('dd')).toHaveText(['₹12,500','₹3,750','₹4,000','₹12,250','₹21,000']);
+ const detail=page.waitForResponse(response=>new URL(response.url()).pathname==='/days/detail'&&new URL(response.url()).searchParams.get('date')===date);
+ await card.getByRole('button',{name:displayDate(date),exact:true}).click();const response=await detail;expect(response.status()).toBe(200);
+ const {day}=await response.json() as {day:SavedDay};expect(day).toMatchObject(prepareDay(comparisonReadingFromRaw(raw,date,[1,2,3,4,5],[1]),[],[],raw.output[0].content[0].text));
+ await expect(page.getByRole('heading',{name:`Confirmed day — ${displayDate(date)}`,exact:true})).toBeFocused();
+ await expect(page.locator('.receipt-amounts dd')).toHaveText(['₹12,500','₹3,750','₹4,000','₹12,250','₹21,000']);await expect(page.locator('.day-receipt')).not.toContainText('Written totals');
+ await page.getByRole('button',{name:'Back to History',exact:true}).click();await expect(card.locator('dd')).toHaveText(['₹12,500','₹3,750','₹4,000','₹12,250','₹21,000']);
  await page.emulateMedia({reducedMotion:'reduce'});expect(await card.evaluate(node=>getComputedStyle(node).animationName)).toBe('none');
 });
 
