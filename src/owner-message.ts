@@ -9,9 +9,9 @@ export function ownerMessage(day:Pick<DaySnapshot,'date'|'checks'|'lines'>):stri
  for(const line of day.lines){
   const amount=Object.hasOwn(line,'correctedValue')?line.correctedValue!:line.aiValue;
   if(amount!==null&&!line.unclear)continue;
-  const date=line.documentDate!==null&&line.documentDate!==day.date?` · ${displayDate(line.documentDate)}`:'';
-  const label=(line.label??'Not extracted').replace(/\s+/g,' ');
-  needs.push(`Photo ${line.source}${date} · ${line.section??'Section not extracted'} · ${label}: ${displayAmount(amount)}${line.unclear&&amount!==null?'?':''}`);
+  const date=line.documentDate!==null&&line.documentDate!==day.date?` (${displayDate(line.documentDate)})`:'';
+  const label=(line.label??'Amount').replace(/\s+/g,' ').trim().replace(/^Other Bills$/i,'Other bills')||'Amount';
+  needs.push(`${label}${date}: ${amount===null?'not read, please check.':`${displayAmount(amount)}? Please check.`}`);
  }
  return [`Manager-confirmed DSR — ${displayDate(day.date)}`,...metrics.map(metric=>`${metric.label}: ${metric.value}`),...(needs.length?['','Needs checking',...needs]:[])].join('\n');
 }

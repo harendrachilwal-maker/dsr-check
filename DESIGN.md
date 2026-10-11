@@ -780,7 +780,7 @@ Use the existing white surface, soft border (#DCE4E2), slate text (#17212F), sec
 
 ### Typography
 
-Keep Inter. Actions and draft figures use 16px; the short confirmation feedback, WhatsApp message disclosure and handoff explanation use 14px. Draft figures use tabular numerals and Indian ₹ formatting. Display the saved document date in the existing short English format. Missing amounts stay Not extracted; unresolved numeric readings keep their question mark. Original AI values are never substituted for a saved correction.
+Keep Inter. Actions and draft figures use 16px; the short confirmation feedback, WhatsApp message disclosure and handoff explanation use 14px. Draft figures use tabular numerals and Indian ₹ formatting. Display the saved document date in the existing short English format. Missing summary amounts stay Not extracted. Needs checking lines use plain words such as “Other bills: not read, please check.” without photo numbers or section names; unresolved numeric readings keep their question mark and “Please check.” Items from another day retain their date. Original AI values are never substituted for a saved correction.
 
 ### Layout
 

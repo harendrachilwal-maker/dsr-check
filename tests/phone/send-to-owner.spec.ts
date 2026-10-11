@@ -23,6 +23,12 @@ async function scan(page:import('@playwright/test').Page){
 }
 for(const width of [320,390,1280])test(`reachable confirmation and saved WhatsApp draft in review and History at ${width}px`,async({page})=>{
  await page.setViewportSize({width,height:844});await page.goto('/');const calls=await scan(page);
+ if(width===390){
+  const unread=page.locator('.dsr-line').filter({has:page.locator('dt').filter({hasText:/^Supplies$/})});
+  await unread.getByRole('button',{name:'Correct',exact:true}).click();
+  await unread.getByLabel('Label',{exact:true}).fill('Other Bills');await unread.getByLabel('Amount (₹)',{exact:true}).fill('');
+  await unread.getByRole('button',{name:'Save Correction',exact:true}).click();await expect(page.getByText('Correction saved.',{exact:true})).toBeVisible();
+ }
  await expect(page.getByRole('link',{name:'Send to owner',exact:true})).toHaveCount(0);
  const confirm=page.getByRole('button',{name:'Confirm day',exact:true});
  for(const y of [0,1400,2800]){
@@ -42,11 +48,16 @@ for(const width of [320,390,1280])test(`reachable confirmation and saved WhatsAp
  }
  const history=page.getByRole('button',{name:'View History',exact:true});const box=await history.boundingBox();expect(box!.y+box!.height).toBeLessThanOrEqual(844);
  await page.locator('#confirmation summary').click();await expect(page.locator('#confirmation pre')).toHaveText(ownerMessage(saved));
+ await expect(page.locator('#confirmation pre')).toContainText('Painting: ₹6,000? Please check.');
+ await expect(page.locator('#confirmation pre')).not.toContainText('Photo 3 · Expense');
+ if(width===390)await expect(page.locator('#confirmation pre')).toContainText('Other bills: not read, please check.');
  await page.screenshot({path:`.test-results/owner-review-${width}.png`,fullPage:false});
  await history.click();await expect(page.locator('#confirmation')).not.toBeVisible();
  const card=page.locator('.history-card');await expect(card.getByRole('link',{name:'Send to owner',exact:true})).toBeVisible();
  expect(new URL((await card.getByRole('link',{name:'Send to owner',exact:true}).getAttribute('href'))!).searchParams.get('text')).toBe(ownerMessage(saved));
- await card.locator('summary').click();await expect(card.locator('pre')).toHaveText(ownerMessage(saved));await page.screenshot({path:`.test-results/owner-history-${width}.png`,fullPage:true});
+ await card.locator('summary').click();await expect(card.locator('pre')).toHaveText(ownerMessage(saved));
+ if(width===390)await expect(card.locator('pre')).toContainText('Other bills: not read, please check.');
+ await page.screenshot({path:`.test-results/owner-history-${width}.png`,fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await card.getByRole('button',{name:'2 Nov 2026',exact:true}).click();await expect(page.locator('#history-page').getByRole('link',{name:'Send to owner',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Upload DSR',exact:true}).click();
