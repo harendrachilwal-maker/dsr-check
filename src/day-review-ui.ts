@@ -27,7 +27,7 @@ export class DayReview {
     this.navUpload=button('Upload DSR',()=>this.showUpload());this.navHistory=button('History',()=>{void this.showHistory();});
     nav.append(this.navUpload,this.navHistory);this.history.id='history-page';this.history.hidden=true;this.content.className='history-content';
     const heading=el('h1','History');heading.tabIndex=-1;
-    this.history.append(heading,el('p','Confirmed days, newest first. Saved days are private to your account. Photos are not saved.'),this.content);
+    this.history.append(heading,el('p','Confirmed days, newest first. Saved days belong to this property. Photos are not saved.'),this.content);
     app.append(nav,this.manager,this.history);
     const panel=this.panel;panel.id='confirmation';panel.className='review-actions';panel.hidden=true;
     this.confirmButton=button('Confirm day',()=>{void this.confirm();});this.confirmButton.className='primary-action confirm-day';
@@ -56,7 +56,7 @@ export class DayReview {
     this.panel.hidden=!state;this.panel.classList.toggle('editing',this.active!==null);this.updateInset();
     document.querySelectorAll<HTMLButtonElement>('[data-correct]').forEach(button=>{button.disabled=this.saving||this.active!==null||this.deps.busy()||!!state?.updating;});
   }
-  showUpload(){this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');this.updateInset();void this.loadLatest();}
+  showUpload(){if(document.getElementById('app')?.dataset.role==='owner')return;this.historyRequest++;this.manager.hidden=false;this.history.hidden=true;this.navUpload.setAttribute('aria-current','page');this.navHistory.removeAttribute('aria-current');this.updateInset();void this.loadLatest();}
   private async loadShare(){
     const receipt=this.confirmed;if(!receipt)return;const request=++this.shareRequest;
     this.actionButtons.removeAttribute('data-confirmed');this.shareSlot.replaceChildren(el('p','Loading saved WhatsApp draft…'));

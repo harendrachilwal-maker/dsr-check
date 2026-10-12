@@ -30,3 +30,6 @@ playwright-report/
 **/*.[tT][iI][fF][fF]
 **/*.[aA][vV][iI][fF]
 **/*.[hH][eE][iI][fF]
+
+# Approved marketing illustration only; hotel records and reference screenshots stay ignored.
+!src/assets/landing-illustration.png

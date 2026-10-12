@@ -1,0 +1,333 @@
+/* This public surface inherits the app palette; the sample alone uses receipt ivory. */
+#login-root:has(.landing-page) {
+  width: 100%;
+  max-width: 720px;
+  min-height: 100svh;
+  padding: 40px 24px 32px;
+}
+
+.landing-page {
+  min-width: 0;
+  max-width: 540px;
+  margin-inline: auto;
+}
+
+.landing-page > header {
+  margin: 0 0 32px;
+}
+
+.landing-page > header h1 {
+  font-size: 40px;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  text-align: center;
+}
+
+.landing-page > header h1 span {
+  display: block;
+  white-space: nowrap;
+}
+
+.landing-page .landing-subheadline {
+  margin: 16px 0 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: center;
+}
+
+.landing-page > section > h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.landing-steps {
+  display: grid;
+  gap: 24px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-steps > li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.landing-step-number {
+  color: #17212F;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-steps p {
+  max-width: 65ch;
+  margin: 0;
+  color: #405453;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.landing-actions {
+  display: grid;
+  gap: 12px;
+  margin: 32px 0 40px;
+}
+
+.landing-actions button {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  font-size: 16px;
+}
+
+.landing-actions .secondary {
+  color: #17212F;
+  border-color: #CCD6D5;
+  background: #FFFFFF;
+}
+
+.landing-actions .primary-action:hover {
+  filter: brightness(.95);
+}
+
+.landing-actions .secondary:hover {
+  border-color: #17212F;
+}
+
+.landing-illustration {
+  margin: 0 0 40px;
+}
+
+.landing-illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+
+.landing-example-note {
+  margin: 8px 0 20px;
+  color: #405453;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.landing-example {
+  margin-top: 40px;
+}
+
+.landing-sample.day-receipt {
+  margin-bottom: 0;
+  border-radius: 16px;
+}
+
+.landing-sample.day-receipt header {
+  margin-top: 0;
+}
+
+.landing-more {
+  margin-top: 40px;
+}
+
+.landing-section-copy {
+  margin: 12px 0 0;
+  color: #405453;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.landing-more h3 {
+  margin: 24px 0 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.landing-message {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #DCE4E2;
+  border-radius: 16px;
+  background: #FFFFFF;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.landing-month-amounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 16px;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #DCE4E2;
+  border-radius: 16px;
+  background: #FFFFFF;
+}
+
+.landing-month-amounts > div {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.landing-month-amounts > div:last-child {
+  grid-column: 1 / -1;
+  border-top: 1px solid #DCE4E2;
+  padding-top: 20px;
+}
+
+.landing-month-amounts dt {
+  color: #405453;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.landing-month-amounts dd {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.landing-plans {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.landing-plan {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #DCE4E2;
+  border-radius: 16px;
+  background: #FFFFFF;
+  transform-origin: center top;
+}
+
+.landing-plan-best {
+  border-color: #405453;
+  background: #F3F6F5;
+}
+
+.landing-plan-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.landing-plan h3 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.landing-plan-tag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #E9EEEF;
+  color: #17212F;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.landing-plan-amount {
+  margin: 16px 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-plan-unit,
+.landing-pricing-note {
+  margin: 0;
+  color: #405453;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.landing-pricing-note {
+  margin-top: 16px;
+}
+
+.landing-plan-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  border-color: #CCD6D5;
+  background: #FFFFFF;
+  color: #17212F;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.landing-plan-contact:hover {
+  border-color: #17212F;
+}
+
+.landing-plan-contact:focus-visible {
+  outline: 2px solid #17212F;
+  outline-offset: 4px;
+}
+
+.landing-final {
+  display: grid;
+  gap: 12px;
+}
+
+.landing-final .primary-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  font-size: 16px;
+}
+
+.landing-final .primary-action:hover {
+  filter: brightness(.95);
+}
+
+@media (max-width: 480px) {
+  .landing-page > header h1 {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page > header h1 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 350px) {
+  #login-root:has(.landing-page) {
+    padding-inline: 16px;
+  }
+  .landing-month-amounts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

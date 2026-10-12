@@ -1,4 +1,4 @@
-import { managerScope } from './managerAccess';
+import {managerScope,managerAccessError,submissionScope,submissionAccessError} from './managerAccess';
 import type { HttpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
@@ -17,7 +17,7 @@ async function readBody(request:Request){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 const confirm=httpAction(async(ctx,request)=>{
-  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
+  const scope=await submissionScope(ctx);if(!scope){const denied=await submissionAccessError(ctx);return reply({error:denied.error},denied.status);}
   try{
     const body=await readBody(request);
     const keys=['raw','date','sources','dsrSources','choices','corrections','expectedVersion'];
@@ -29,25 +29,37 @@ const confirm=httpAction(async(ctx,request)=>{
     if(new TextEncoder().encode(JSON.stringify(snapshot)).length>750000)throw new Error('The reading is too large to save.');
     const result=await ctx.runMutation(internal.days.confirm,{scope,snapshot,expectedVersion:body.expectedVersion as Id<'confirmedVersions'>|null});
     return reply(result,result.status==='exists'?409:200);
-  }catch{return reply({error:'Your day could not be confirmed. Check its document date and corrections, then try again.'},400);}
+  }catch{
+    if(!await submissionScope(ctx)){const denied=await submissionAccessError(ctx);return reply({error:denied.error},denied.status);}
+    return reply({error:'Your day could not be confirmed. Check its document date and corrections, then try again.'},400);
+  }
 });
 const history=httpAction(async(ctx,request)=>{
-  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
+  const scope=await managerScope(ctx);if(!scope){const denied=await managerAccessError(ctx);return reply({error:denied.error},denied.status);}
   try{
-    const cursor=new URL(request.url).searchParams.get('cursor');
+    const params=new URL(request.url).searchParams;
+    if(params.size>1||[...params.keys()].some(key=>key!=='cursor'))return reply({error:'Choose your saved History.'},400);
+    const cursor=params.get('cursor');
     return reply(await ctx.runQuery(internal.days.history,{scope,paginationOpts:{numItems:20,cursor}}));
-  }catch{return reply({error:'History could not be loaded. Try again.'},400);}
+  }catch{
+    if(!await managerScope(ctx)){const denied=await managerAccessError(ctx);return reply({error:denied.error},denied.status);}
+    return reply({error:'History could not be loaded. Try again.'},400);
+  }
 });
 const detail=httpAction(async(ctx,request)=>{
-  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
-  const date=new URL(request.url).searchParams.get('date');if(!date||!validDate(date))return reply({error:'Choose a saved date.'},400);
-  const day=await ctx.runQuery(internal.days.detail,{scope,date});
-  return day?reply({day}):reply({error:'No saved day found for this date.'},404);
+  const scope=await managerScope(ctx);if(!scope){const denied=await managerAccessError(ctx);return reply({error:denied.error},denied.status);}
+  const params=new URL(request.url).searchParams,date=params.get('date');if(params.size!==1||!date||!validDate(date))return reply({error:'Choose a saved date.'},400);
+  try{const day=await ctx.runQuery(internal.days.detail,{scope,date});return day?reply({day}):reply({error:'No saved day found for this date.'},404);}
+  catch{const denied=await managerAccessError(ctx);return reply({error:denied.error},denied.status);}
 });
-const latest=httpAction(async ctx=>{
-  const scope=await managerScope(ctx);if(!scope)return reply({error:'Sign in to continue.'},401);
+const latest=httpAction(async(ctx,request)=>{
+  const scope=await managerScope(ctx);if(!scope){const denied=await managerAccessError(ctx);return reply({error:denied.error},denied.status);}
+  if(new URL(request.url).searchParams.size)return reply({error:'Choose your last confirmed day.'},400);
   try{return reply({day:await ctx.runQuery(internal.days.latest,{scope})});}
-  catch{return reply({error:'Your last confirmed day could not be loaded. Try again.'},400);}
+  catch{
+    if(!await managerScope(ctx)){const denied=await managerAccessError(ctx);return reply({error:denied.error},denied.status);}
+    return reply({error:'Your last confirmed day could not be loaded. Try again.'},400);
+  }
 });
 export function registerDayRoutes(http:HttpRouter){
   for(const [path,method,handler] of [['/days/confirm','POST',confirm],['/days/history','GET',history],['/days/detail','GET',detail],['/days/latest','GET',latest]] as const){

@@ -1,6 +1,7 @@
 import {expect,test} from 'vitest';
 import {convexTest} from 'convex-test';
 import schema from '../convex/schema';
+import {propertyAccount} from './property-test-fixture';
 import {comparisonReadingFromRaw,type Context} from '../src/comparison';
 import {prepareDay,type Correction,type DaySnapshot} from '../src/confirmed-day';
 import {makeRaw} from './comparison-fixture';
@@ -16,11 +17,11 @@ const fixture=(amounts:(number|null)[]=[12500,3750,4000,12250],uncertain=-1)=>{
  return makeRaw(documents,contexts);
 };
 const snapshot=(raw=fixture(),corrections:Correction[]=[])=>prepareDay(comparisonReadingFromRaw(raw,date,[1],[1]),corrections,[]);
-const setup=()=>{
+const setup=async()=>{
  const t=convexTest(schema,modules);
- return {t,manager:t.withIdentity({subject:'sales-manager|session'})};
+ return {t,manager:await propertyAccount(t)};
 };
-type Manager=ReturnType<typeof setup>['manager'];
+type Manager=Awaited<ReturnType<typeof setup>>['manager'];
 async function confirm(manager:Manager,raw=fixture(),corrections:Correction[]=[],sources=[1]){
  const response=await manager.fetch('/days/confirm',{method:'POST',body:JSON.stringify({raw,date,sources,dsrSources:[1],choices:[],corrections,expectedVersion:null})});
  expect(response.status).toBe(200);
@@ -31,10 +32,10 @@ async function detail(manager:Manager){
  expect(response.status).toBe(200);
  return (await response.json()).day;
 }
-async function insertLegacy(t:ReturnType<typeof setup>['t'],day:DaySnapshot){
+async function insertLegacy(t:Awaited<ReturnType<typeof setup>>['t'],day:DaySnapshot){
  return t.run(async ctx=>{
-  const version=await ctx.db.insert('confirmedVersions',{scope:'manager:sales-manager',date,confirmedAt:1800000000000,previousVersion:null,snapshot:day});
-  await ctx.db.insert('confirmedDays',{scope:'manager:sales-manager',date,version,confirmedAt:1800000000000});
+  const version=await ctx.db.insert('confirmedVersions',{scope:(await ctx.db.query('properties').take(1))[0].dataScope,date,confirmedAt:1800000000000,previousVersion:null,snapshot:day});
+  await ctx.db.insert('confirmedDays',{scope:(await ctx.db.query('properties').take(1))[0].dataScope,date,version,confirmedAt:1800000000000});
   return version;
  });
 }
@@ -48,7 +49,7 @@ test.each([
  {amounts:[0.1,0.2,0.29,0],status:'Difference',sales:0.3,money:0.29,difference:-0.01},
  {amounts:[0.1,0.2,0.31,0],status:'Difference',sales:0.3,money:0.31,difference:0.01},
 ])('saved detail calculates integer-paise sales $sales against money $money with $difference difference',async({amounts,status,sales,money,difference})=>{
- const {manager}=setup();
+ const {manager}=await setup();
  await confirm(manager,fixture(amounts));
  const day=await detail(manager);
  expect(day.salesMoneyCheck).toEqual({status,sales,money,difference});
@@ -57,25 +58,25 @@ test.each([
 });
 
 test.each(titles.map((title,index)=>({title,index})))('a missing $title amount stays incomplete instead of becoming zero',async({index})=>{
- const {manager}=setup();const amounts:(number|null)[]=[12500,3750,4000,12250];amounts[index]=null;
+ const {manager}=await setup();const amounts:(number|null)[]=[12500,3750,4000,12250];amounts[index]=null;
  await confirm(manager,fixture(amounts));
  expect((await detail(manager)).salesMoneyCheck).toEqual({status:'Not enough information',sales:index<2?null:16250,money:index<2?16250:null,difference:null});
 });
 
 test.each(titles.map((title,index)=>({title,index})))('a legacy snapshot without the $title saved check stays incomplete',async({index})=>{
- const {t,manager}=setup();const legacy=snapshot();legacy.checks=legacy.checks.filter(check=>check.title!==titles[index]);
+ const {t,manager}=await setup();const legacy=snapshot();legacy.checks=legacy.checks.filter(check=>check.title!==titles[index]);
  await insertLegacy(t,legacy);
  expect((await detail(manager)).salesMoneyCheck).toEqual({status:'Not enough information',sales:index<2?null:16250,money:index<2?16250:null,difference:null});
 });
 
 test.each(titles.map((title,index)=>({title,index})))('a still-uncertain $title value blocks a legacy numeric total',async({index})=>{
- const {t,manager}=setup();const legacy=snapshot();legacy.lines[index].unclear=true;
+ const {t,manager}=await setup();const legacy=snapshot();legacy.lines[index].unclear=true;
  await insertLegacy(t,legacy);
  expect((await detail(manager)).salesMoneyCheck).toEqual({status:'Not enough information',sales:index<2?null:16250,money:index<2?16250:null,difference:null});
 });
 
 test.each(titles.map((title,index)=>({title,index})))('a newly confirmed uncertain $title stays incomplete',async({index})=>{
- const {manager}=setup();
+ const {manager}=await setup();
  await confirm(manager,fixture([12500,3750,4000,12250],index));
  const day=await detail(manager);
  expect(day.salesMoneyCheck).toEqual({status:'Not enough information',sales:index<2?null:16250,money:index<2?16250:null,difference:null});
@@ -84,7 +85,7 @@ test.each(titles.map((title,index)=>({title,index})))('a newly confirmed uncerta
 });
 
 test('manager-corrected saved values replace the original uncertain amounts without changing their history',async()=>{
- const {manager}=setup();
+ const {manager}=await setup();
  const raw=fixture([999,3750,4000,12250],0);
  await confirm(manager,raw,[{id:'1:0',amount:12500}]);
  const day=await detail(manager);
@@ -95,7 +96,7 @@ test('manager-corrected saved values replace the original uncertain amounts with
 });
 
 test('supporting evidence and unrelated saved uncertainty never replace or block the four DSR operands',async()=>{
- const {t,manager}=setup();const legacy=snapshot();
+ const {t,manager}=await setup();const legacy=snapshot();
  for(const check of legacy.checks){check.evidence=987654;check.difference=987654;check.status='Not enough information';}
  const contexts:Context[]=[
   {...legacy.aiReading.contexts[0],source:1,line:4,role:'Expense charge'},
@@ -109,7 +110,7 @@ test('supporting evidence and unrelated saved uncertainty never replace or block
 });
 
 test('a newly confirmed day ignores an uncertain supporting photo while preserving its existing evidence checks',async()=>{
- const {manager}=setup();const raw=fixture(),answer=JSON.parse(raw.output[0].content[0].text);
+ const {manager}=await setup();const raw=fixture(),answer=JSON.parse(raw.output[0].content[0].text);
  answer.documents.push({source:2,kind:'Guest bill',date,lines:[{section:'Sales',label:'Fabricated room bill',amount:999999,unclear:true}]});
  answer.contexts.push({...answer.contexts[0],source:2,line:0});raw.output[0].content[0].text=JSON.stringify(answer);
  await confirm(manager,raw,[],[1,2]);
@@ -119,7 +120,7 @@ test('a newly confirmed day ignores an uncertain supporting photo while preservi
 });
 
 test('uncertain expense, OTA and written-total DSR lines do not block available sales and guest money',async()=>{
- const {manager}=setup();const raw=fixture(),answer=JSON.parse(raw.output[0].content[0].text);
+ const {manager}=await setup();const raw=fixture(),answer=JSON.parse(raw.output[0].content[0].text);
  for(const [index,role] of ['Expense charge','OTA payment','Written total'].entries()){
   answer.documents[0].lines.push({section:index===0?'Expense':index===1?'Payment':'Sales',label:`Fabricated ${role}`,amount:null,unclear:true});
   answer.contexts.push({...answer.contexts[0],line:4+index,role});
@@ -131,7 +132,7 @@ test('uncertain expense, OTA and written-total DSR lines do not block available 
 
 test('legacy relevant classification uncertainty or a missing saved contributing line cannot produce a match',async()=>{
  for(const missingLine of [false,true]){
-  const {t,manager}=setup();const legacy=snapshot();
+  const {t,manager}=await setup();const legacy=snapshot();
   if(missingLine)legacy.lines=legacy.lines.slice(1);
   else legacy.aiReading.contexts[0].unclear=true;
   await insertLegacy(t,legacy);
@@ -140,14 +141,15 @@ test('legacy relevant classification uncertainty or a missing saved contributing
 });
 
 test('legacy detail derives the check without writing snapshots or versions and keeps account access enforced',async()=>{
- const {t,manager}=setup(),legacy=snapshot();const version=await insertLegacy(t,legacy);
- const stored=()=>t.run(async ctx=>({days:await ctx.db.query('confirmedDays').withIndex('by_scope_date',q=>q.eq('scope','manager:sales-manager')).take(10),versions:await ctx.db.query('confirmedVersions').withIndex('by_scope_date',q=>q.eq('scope','manager:sales-manager')).take(10)}));
+ const {t,manager}=await setup(),legacy=snapshot();const version=await insertLegacy(t,legacy);
+ const scope=await t.run(async ctx=>(await ctx.db.query('properties').take(1))[0].dataScope);
+ const stored=()=>t.run(async ctx=>({days:await ctx.db.query('confirmedDays').withIndex('by_scope_date',q=>q.eq('scope',scope)).take(10),versions:await ctx.db.query('confirmedVersions').withIndex('by_scope_date',q=>q.eq('scope',scope)).take(10)}));
  const before=await stored();
  const day=await detail(manager);
  expect(day).toMatchObject({version,salesMoneyCheck:{status:'Matched',sales:16250,money:16250,difference:0}});
  expect(before.versions[0].snapshot).not.toHaveProperty('salesMoneyCheck');
  expect(await stored()).toEqual(before);
- expect((await t.withIdentity({subject:'another-manager|session'}).fetch(`/days/detail?date=${date}`)).status).toBe(404);
+ expect((await (await propertyAccount(t,'other@example.invalid')).fetch(`/days/detail?date=${date}`)).status).toBe(404);
  expect((await t.fetch(`/days/detail?date=${date}`)).status).toBe(401);
  expect(await stored()).toEqual(before);
 });

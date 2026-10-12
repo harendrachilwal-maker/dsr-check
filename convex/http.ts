@@ -1,21 +1,23 @@
 import { auth } from './auth';
-import { managerScope } from './managerAccess';
+import {submissionScope,submissionAccessError} from './managerAccess';
 import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { internal, components } from './_generated/api';
 import { registerStaticRoutes } from '@convex-dev/static-hosting';
-import { BUSY, MAX_BYTES, imageType, sections, datedDocumentsFromRawResponse, autoDocumentsFromRawResponse, documentsFromRawResponse, dailyFromRawResponse, extractionFromRawResponse, totalsBySection, extractionFailureCode } from '../src/extraction';
+import { BUSY, sections, datedDocumentsFromRawResponse, autoDocumentsFromRawResponse, documentsFromRawResponse, dailyFromRawResponse, extractionFromRawResponse, totalsBySection, extractionFailureCode } from '../src/extraction';
 import { MAX_REQUEST_BYTES, parsePhotos, SIZE_ERROR } from '../src/uploads';
-import { selectDailyRow, validDate, recordKinds, recordType } from '../src/daily';
+import { selectDailyRow, validDate } from '../src/daily';
 import { documentInstructions, documentSchema } from '../src/document-request';
 import { comparisonReadingFromRaw, buildComparison } from '../src/comparison';
 import { comparisonSchema, comparisonInstructions } from '../src/comparison-request';
 import { applyCorrections } from '../src/confirmed-day';
 import { registerDayRoutes } from './daysHttp';
+import { registerOwnerRoutes } from './ownerHttp';
+import {registerPropertyRoutes} from './propertyHttp';
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
 export const extract = httpAction(async (ctx, request) => {
-  if(!await managerScope(ctx))return reply({error:'Sign in to continue.'},401);
+  if(!await submissionScope(ctx)){const denied=await submissionAccessError(ctx);return reply({error:denied.error},denied.status);}
   let stage = 'upload';
   const failed = (reason: string, status = 503, providerStatus?: number, code?: string) => {
     // Never log request bodies, financial figures, credentials or provider error messages.
@@ -94,37 +96,9 @@ export const extract = httpAction(async (ctx, request) => {
   } catch (cause) { return failed(stage, 503, undefined, stage === 'extraction_validation' ? extractionFailureCode(cause) : undefined); }
 });
 
-export const uploadRecords = httpAction(async (ctx, request) => {
-  if(!await managerScope(ctx))return reply({error:'Sign in to continue.'},401);
-  const stored: import('./_generated/dataModel').Id<'_storage'>[] = [];
-  try {
-    const reader = request.body?.getReader(); if (!reader) return reply({error:'Choose supporting records.'},400);
-    const chunks: Uint8Array[] = []; let size = 0;
-    while (true) { const item = await reader.read(); if (item.done) break; size += item.value.length; if (size > MAX_REQUEST_BYTES) { await reader.cancel(); return reply({error:'Choose supporting files totalling no more than 10 MB.'},413); } chunks.push(item.value); }
-    const bytes = new Uint8Array(size); let offset = 0; for (const chunk of chunks) { bytes.set(chunk,offset); offset += chunk.length; }
-    const form = await new Request('https://local.invalid', {method:'POST',headers:{'Content-Type':request.headers.get('Content-Type') ?? ''},body:bytes}).formData();
-    const date = form.get('date'), kind = form.get('kind');
-    if (!validDate(date) || !recordKinds.includes(kind as typeof recordKinds[number])) return reply({error:'Choose a reporting date and record type.'},400);
-    const files = form.getAll('files');
-    if (!files.length || files.length > 6 || files.some(file => typeof file === 'string')) return reply({error:'Choose one to six supporting files.'},400);
-    const validated: {file: Blob;filename:string;mime:string}[] = []; let total = 0;
-    for (const item of files) {
-      const file = item as File; total += file.size;
-      if (total > MAX_BYTES) return reply({error:'Choose supporting files totalling no more than 10 MB.'},413);
-      const bytes = new Uint8Array(await file.arrayBuffer()); const mime = imageType(bytes) ?? recordType(bytes);
-      if (!mime) return reply({error:'Choose JPEG, PNG, WebP or PDF supporting records.'},400);
-      validated.push({file:new Blob([bytes],{type:mime}),filename:file.name.slice(0,200),mime});
-    }
-    if (!(await ctx.runMutation(internal.records.reserve,{}))) return reply({error:BUSY},429);
-    const batch = crypto.randomUUID();
-    const records = [];
-    for (const file of validated) { const storageId = await ctx.storage.store(file.file); stored.push(storageId); records.push({kind:kind as typeof recordKinds[number],storageId,filename:file.filename}); }
-    await ctx.runMutation(internal.records.save,{date,batch,records});
-    return reply({date,batch,files:records.map(record=>({filename:record.filename,kind:record.kind})),status:'Uploaded — not checked'});
-  } catch {
-    for (const id of stored) { try { await ctx.storage.delete(id); } catch { /* failed batch cleanup; never print document details */ } }
-    return reply({error:'Upload failed. Your selected files are still available to retry.'},503);
-  }
+export const uploadRecords=httpAction(async(ctx)=>{
+  if(!await submissionScope(ctx)){const denied=await submissionAccessError(ctx);return reply({error:denied.error},denied.status);}
+  return reply({error:'Supporting photos are read with the DSR and are not stored.'},410);
 });
 
 const http = httpRouter();
@@ -138,7 +112,7 @@ http.route({path:'/records',method:'OPTIONS',handler:httpAction(async()=>new Res
 
 // Rechecking manager-supplied context is free: no model call, storage or quota mutation.
 export const compare = httpAction(async (_ctx,request)=>{
-  if(!await managerScope(_ctx))return reply({error:'Sign in to continue.'},401);
+  if(!await submissionScope(_ctx)){const denied=await submissionAccessError(_ctx);return reply({error:denied.error},denied.status);}
   try{
     const reader=request.body?.getReader();if(!reader)return reply({error:'Read the photos before comparing.'},400);
     const chunks:Uint8Array[]=[];let size=0;
@@ -155,4 +129,6 @@ http.route({path:'/compare',method:'OPTIONS',handler:httpAction(async()=>new Res
 
 auth.addHttpRoutes(http);
 registerDayRoutes(http);
+registerOwnerRoutes(http);
+registerPropertyRoutes(http);
 registerStaticRoutes(http, components.staticHosting);

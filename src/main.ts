@@ -23,6 +23,12 @@ date.onclick=()=>{if(!date.disabled)date.showPicker?.();};
 let photos:Photo[]=[];let scanning=false;let selecting=false;
 let comparisonState:ReviewState|null=null;
 const review=new DayReview({endpoint:import.meta.env.VITE_CONVEX_SITE_URL,state:()=>comparisonState,photos:()=>photos,busy:()=>scanning||selecting,refreshControls:renderPhotos,apply:applyLineCorrections});
+if(app.dataset.role==='owner'){
+ const overview=document.createElement('button');overview.type='button';overview.className='secondary';overview.textContent='Owner overview';overview.onclick=()=>location.assign('/owner');
+ app.querySelector('nav')!.prepend(overview);
+ for(const button of app.querySelectorAll<HTMLButtonElement>('nav button'))if(button.textContent==='Upload DSR')button.hidden=true;
+ void review.showHistory();
+}
 function error(message=''){get('error').textContent=message;get('error').hidden=!message;}
 function clearResults(){comparisonState=null;review.reset();primary.classList.remove('secondary');get('comparison').replaceChildren();get('results').hidden=true;get('raw').textContent='';get('amounts').textContent='';get('status').textContent='';get('result-heading').textContent='Extracted Digital DSR';}
 function renderPhotos(){

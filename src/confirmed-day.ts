@@ -5,7 +5,7 @@ import type {SalesMoneyCheck} from './sales-money';
 export type Correction = { id:string; label?:string; amount?:number|null };
 export type SavedLine = { id:string; source:number; documentDate:string|null; section:DsrLine['section']; aiLabel:string|null; label:string|null; aiValue:number|null; correctedValue?:number|null; correctedLabel?:string; unclear:boolean; aiUnclear:boolean; writtenTotal:boolean };
 export type DaySnapshot = { date:string; lines:SavedLine[]; writtenTotals:SavedLine[]; checks:Check[]; aiReading:Reading; aiAnswerText:string; choices:Choice[] };
-export type SavedDay = DaySnapshot & { confirmedAt:number; version:string; salesMoneyCheck:SalesMoneyCheck };
+export type SavedDay = DaySnapshot & { confirmedAt:number; version:string; salesMoneyCheck:SalesMoneyCheck; editedBy?:'owner'; editedAt?:number };
 export const checkWord = (status:Check['status']) => status==='Matched'?'Matches':status==='Difference'?'Differs':'Not enough information';
 
 export function parseAmount(text:string):number|null {

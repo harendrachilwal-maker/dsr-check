@@ -1,6 +1,8 @@
 Shaktimaan, here's my PRODUCT.md for Build Sprint. Check it the way the Product thinking pages on the dashboard teach: the job in one sentence with one "so I can", the forces that matter and what the product does about each, today's journey, then the core flow from the moment it hurts to the job done, with what must not happen where it matters, onboarding that asks for the smallest commitment before the first value, what v1 does and doesn't do, and milestones that start with the riskiest part in its simplest form. Tell me the weakest part first and make me rewrite it. Don't write it for me. When every part holds up, lock my product scope.
 # PRODUCT.md
 
+**Current scope authority:** The property-owner extension in section 8 was explicitly approved on 2026-10-12 for development only. It supersedes older owner-dashboard exclusions and owner-onboarding descriptions only for the features named there. The earlier product vision below is not a request to implement automatic WhatsApp delivery, Q&A, reminders or financial approval in this extension.
+
 ## 1. The job
 When I have not checked the DSR for a few days and find less cash in the drawer than the DSR’s closing cash balance, I want to quickly understand what happened with the money, so I can catch mistakes or leakage without calling staff and checking old reports one by one.
 
@@ -144,7 +146,7 @@ Hotel details, more team members, preferred reporting time and other settings af
 Full PMS, reservations, room inventory, payroll, staff attendance, accounting software, channel manager, multi-property dashboard or forecasting.
 
 ### Nice to have
-Weekly/monthly summaries, old-report search, OTA reconciliation, pending-payment reminders and automatic anomaly alerts.
+Weekly summaries, broader monthly analysis, old-report search, OTA reconciliation, pending-payment reminders and automatic anomaly alerts. The narrow saved-month view approved in section 8 is now in scope for the development-only property extension.
 
 ### How I’ll know it worked
 **In the first 7 days, the team submits and confirms at least 6 of 7 DSRs, and I call them about cash no more than 1 time instead of my usual 4 times in a week.**
@@ -200,3 +202,31 @@ Turn one day of hotel records into a trusted daily update for the owner.
 **Owner:** In control without micromanaging.  
 **Manager/team:** Accountable, clear and organised.
 
+## 8. Approved property-owner extension — milestone 8 (development only, 2026-10-12)
+
+### The owner and manager's job
+
+When I need to review my hotel's saved reports, I want one private property view with the saved monthly figures and dated receipts, so I can see what needs checking and correct a saved amount without losing the original report.
+
+The owner signs up or signs in using the existing Convex email/password system, creates one property and invites one manager by email. The owner copies the private invite link and shares it themselves; the app sends no invitation email. The manager opens that link, signs in or signs up with the invited email, and joins that one property. Backend checks bind the invitation to the authenticated account's email. No new authentication provider or email-delivery service is part of this work.
+
+### Owner view and controls
+
+- Choose a month and see five totals from that property's latest saved corrected DSR versions: Room revenue, Food revenue, Guest cash, Guest UPI and Expenses. Code calculates from saved values; it does not use original AI amounts instead of corrections or infer values from supporting evidence. Missing or uncertain contributing amounts remain visible as incomplete, never silently treated as zero.
+- See counts of saved days with the existing Sales vs money results: Matches, Check and Not enough info. Keep those results distinct from supporting-evidence checks and financial approval.
+- Keep the existing count of saved confirmed days that have at least one missing or uncertain amount among the five summary figures. Label it as days with a missing amount; do not count absent or future calendar dates.
+- Open a saved date using the existing receipt presentation and truthful confirmation information. Preserve the current missing-value wording, saved-zero handling, warnings and Sales vs money result.
+- Edit a saved label or amount with explicit Save and Cancel actions. Saving creates a new dated report version and records the owner as the editor with the backend save time. Retain the original manager-confirmed version, original AI reading, manager corrections, manager confirmation and intervening history. Recheck the changed version in backend code; viewing or editing a report is not financial approval and must not be labelled as a fresh manager confirmation.
+- Remove the current manager. Revoke their property access on every backend request, including existing signed-in sessions, without deleting reports, original confirmations or history.
+
+### Manager flow and record access
+
+The invited manager belongs to one property. Preserve their existing DSR/Other photos upload, reading, corrections, context checks, Confirm day and replacement prompts, History, saved-day receipt and manual Send to owner draft. The property owner can read that property's saved reports; another property's owner or manager cannot read, edit, confirm, share or attach them.
+
+Only the currently authenticated account's own existing private account-scoped records may be attached to its new property. Keep all dates and versions; this is not permission to search or combine other accounts' data, bulk-migrate fabricated test accounts or move anonymous browser-scoped records. Photos continue to be temporary and are not stored.
+
+### Scope and acceptance
+
+This is one development-only extension of milestone 8, not a global redesign or a new financial-approval workflow. Keep the existing Convex stack, Inter interface, finance palette and receipt exception. One property per owner and one active manager per property are in scope; multi-property management, extra staff roles, automatic email delivery, WhatsApp API delivery, owner Q&A, reminders, financial approval and photo storage are outside this extension.
+
+Recording this scope does not establish implementation, testing or owner acceptance. Acceptance requires a complete owner setup → manager invite/sign-in → manager confirmation → owner month/receipt/edit flow, cross-property access and removal checks, preservation of old versions, phone-width review and a separate read-only review. Production and deployment are excluded. PROGRESS.md is updated only after the owner confirms the milestone works.

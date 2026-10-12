@@ -2,6 +2,7 @@ import {test,expect,vi} from 'vitest';
 import {convexTest} from 'convex-test';
 import schema from '../convex/schema';
 import {makeRaw,comparisonDate as date} from './comparison-fixture';
+import {propertyAccount} from './property-test-fixture';
 const modules=import.meta.glob('../convex/**/*.ts');
 test('signed-out and old browser-key requests cannot scan, correct, confirm or read History',async()=>{
  const t=convexTest(schema,modules),provider=vi.fn();vi.stubGlobal('fetch',provider);
@@ -15,7 +16,7 @@ test('signed-out and old browser-key requests cannot scan, correct, confirm or r
  }finally{vi.unstubAllGlobals();}
 });
 test('new accounts cannot see legacy dev days or another manager’s day, even with their browser key',async()=>{
- const t=convexTest(schema,modules),a=t.withIdentity({subject:'manager-a|session'}),b=t.withIdentity({subject:'manager-b|session'});
+ const t=convexTest(schema,modules),a=await propertyAccount(t),b=await propertyAccount(t,'other@example.invalid');
  const body={raw:makeRaw(),date,sources:[1,2,3,4,5],dsrSources:[1],choices:[],corrections:[],expectedVersion:null};
  const result=await a.fetch('/days/confirm',{method:'POST',body:JSON.stringify(body)});expect(result.status).toBe(200);
  const original=await t.run(ctx=>ctx.db.query('confirmedDays').take(1));

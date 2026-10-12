@@ -3,6 +3,10 @@ import {displayDate,displayTime} from './date-display';
 import {historySummary} from './history-summary';
 import {ownerNeedsChecking} from './owner-message';
 import {salesMoneyPresentation} from './sales-money';
+import {displayAmount} from './extraction';
+import {ownerMetrics,type OwnerReceipt} from './owner-data';
+import type {SalesMoneyCheck} from './sales-money';
+import {propertyName} from './session';
 
 const el=<K extends keyof HTMLElementTagNameMap>(tag:K,text?:string)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
 
@@ -22,16 +26,18 @@ function pattern(){
  return svg;
 }
 
-export function dayReceipt(day:SavedDay){
- const receipt=el('article');receipt.className='day-receipt';receipt.setAttribute('aria-labelledby','receipt-date');
+type ReceiptContent={date:string;confirmedAt:number;salesMoneyCheck:SalesMoneyCheck;metrics:{label:string;value:string}[];warnings:string[];editedAt?:number;editedBy?:'owner'};
+
+function renderReceipt(day:ReceiptContent,headingId='receipt-date',name=propertyName()){
+ const receipt=el('article');receipt.className='day-receipt';receipt.setAttribute('aria-labelledby',headingId);
  const header=el('header');
- const hotel=el('p','Himalaya Mount View Resort');hotel.className='receipt-hotel';
- const heading=el('h2',displayDate(day.date));heading.className='receipt-date';heading.id='receipt-date';heading.tabIndex=-1;
+ const hotel=el('p',name);hotel.className='receipt-hotel';
+ const heading=el('h2',displayDate(day.date));heading.className='receipt-date';heading.id=headingId;heading.tabIndex=-1;
  heading.setAttribute('aria-label',`Confirmed day — ${displayDate(day.date)}`);
  header.append(hotel,heading);
  const amounts=el('dl');amounts.className='receipt-amounts';
  // These are the persisted, corrected DSR checks; evidence and raw AI figures never fill a blank.
- for(const metric of historySummary(day)){
+ for(const metric of day.metrics){
   const row=el('div'),missing=metric.value==='Not extracted',amount=el('dd',missing?'Not read':metric.value);
   if(missing)amount.className='receipt-not-read';
   row.append(el('dt',metric.label),amount);amounts.append(row);
@@ -41,11 +47,24 @@ export function dayReceipt(day:SavedDay){
  const badge=el('span',check.label);badge.className='sales-money-badge';
  salesMoney.append(el('span','Sales vs money'),badge);if(check.detail)salesMoney.append(el('span',check.detail));
  const needs=el('section');needs.className='receipt-needs';needs.append(el('h3','Needs checking'));
- const warnings=ownerNeedsChecking(day);
+ const warnings=day.warnings;
  if(warnings.length){const list=el('ul');for(const warning of warnings)list.append(el('li',warning));needs.append(list);}
  const footer=el('footer');footer.className='receipt-confirmation';
  const stamp=el('time',displayTime(day.confirmedAt));stamp.dateTime=new Date(day.confirmedAt).toISOString();
  footer.append(el('p','Confirmed by manager'),stamp);
+ if(day.editedBy==='owner'&&day.editedAt!==undefined){
+  const edited=el('time',displayTime(day.editedAt));edited.dateTime=new Date(day.editedAt).toISOString();
+  footer.append(el('p','Edited by owner'),edited);
+ }
  receipt.append(pattern(),header,amounts,salesMoney,...(warnings.length?[needs]:[]),pattern(),footer);
  return {receipt,heading};
+}
+
+export function dayReceipt(day:SavedDay){
+ return renderReceipt({...day,metrics:historySummary(day),warnings:ownerNeedsChecking(day)});
+}
+
+// The owner receives only this read-only projection, never the raw reading or editable lines.
+export function ownerReceipt(day:OwnerReceipt,name=propertyName()){
+ return renderReceipt({...day,metrics:ownerMetrics.map(({key,label})=>({label,value:displayAmount(day.values[key])})),warnings:day.needsChecking},`owner-receipt-${day.date}`,name);
 }

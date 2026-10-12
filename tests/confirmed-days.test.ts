@@ -4,6 +4,7 @@ import schema from '../convex/schema';
 import { applyCorrections, prepareDay } from '../src/confirmed-day';
 import { comparisonReadingFromRaw } from '../src/comparison';
 import { makeRaw, comparisonDate as date } from './comparison-fixture';
+import {propertyAccount} from './property-test-fixture';
 const modules = import.meta.glob('../convex/**/*.ts');
 const reading = () => comparisonReadingFromRaw(makeRaw(),date,[1,2,3,4,5],[1]);
 const token = 'a'.repeat(64), otherToken = 'b'.repeat(64);
@@ -37,7 +38,7 @@ test('a blank DSR cell remains Not extracted when the day is saved, never an inv
  const raw=makeRaw();const answer=JSON.parse(raw.output[0].content[0].text);
  answer.documents[0].lines.push({section:'Expense',label:'Other Bills',amount:null,unclear:false});
  answer.contexts.push({...answer.contexts[0],line:1});raw.output[0].content[0].text=JSON.stringify(answer);
- const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});const response=await t.fetch('/days/confirm',request({...body(),raw}));expect(response.status).toBe(200);
+ const t=await propertyAccount(convexTest(schema,modules));const response=await t.fetch('/days/confirm',request({...body(),raw}));expect(response.status).toBe(200);
  const {day}=await (await t.fetch(`/days/detail?date=${date}`,{headers:{Authorization:`Bearer ${token}`}})).json();
  const saved=day.lines.find((line:{id:string})=>line.id==='1:1');expect(saved.aiValue).toBeNull();expect(saved).not.toHaveProperty('correctedValue');
  expect(day.checks.find((check:{title:string})=>check.title==='Expenses').status).toBe('Not enough information');
@@ -45,7 +46,7 @@ test('a blank DSR cell remains Not extracted when the day is saved, never an inv
 });
 
 test('confirmation persists without photos, protects history and requires explicit version replacement',async()=>{
- const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
+ const root=convexTest(schema,modules),t=await propertyAccount(root),other=await propertyAccount(root,'other@example.invalid');
  const first=await t.fetch('/days/confirm',request(body([{id:'3:0',amount:6100}])));
  expect(first.status).toBe(200);const one=await first.json();expect(one.status).toBe('saved');
  const second=await t.fetch('/days/confirm',request(body()));
@@ -54,7 +55,7 @@ test('confirmation persists without photos, protects history and requires explic
  const detail=await (await t.fetch(`/days/detail?date=${date}`,{headers})).json();
  expect(detail.day.lines.find((line:{id:string})=>line.id==='3:0').correctedValue).toBe(6100);
  expect(detail.day.confirmedAt).toBeGreaterThan(0);
- expect((await t.withIdentity({subject:'other-manager|session'}).fetch(`/days/detail?date=${date}`)).status).toBe(404);
+ expect((await other.fetch(`/days/detail?date=${date}`)).status).toBe(404);
  expect((await convexTest(schema,modules).fetch('/days/history')).status).toBe(401);
  expect((await t.fetch('/days/confirm',request({...body(),images:['data:image/jpeg;base64,private']}))).status).toBe(400);
  const replacement=await t.fetch('/days/confirm',request({...body(),expectedVersion:one.version}));
@@ -66,12 +67,12 @@ test('confirmation persists without photos, protects history and requires explic
  expect(await t.run(ctx=>ctx.db.system.query('_storage').take(10))).toHaveLength(0);
 });
 
-test('History orders by document date, paginates and cannot mix browser scopes',async()=>{
- const t=convexTest(schema,modules).withIdentity({subject:"test-manager|test-session"});
+test('History orders by document date, paginates and cannot mix properties',async()=>{
+ const root=convexTest(schema,modules),t=await propertyAccount(root),other=await propertyAccount(root,'other@example.invalid');
  for(const dayDate of ['2026-11-03','2026-11-01','2026-11-04']){
   const raw=makeRaw(),answer=JSON.parse(raw.output[0].content[0].text);answer.date=dayDate;for(const doc of answer.documents)doc.date=dayDate;raw.output[0].content[0].text=JSON.stringify(answer);
   expect((await t.fetch('/days/confirm',request({...body(),date:dayDate,raw}))).status).toBe(200);
  }
  const list=await (await t.fetch('/days/history',{headers:{Authorization:`Bearer ${token}`}})).json();expect(list.days.map((day:{date:string})=>day.date)).toEqual(['2026-11-04','2026-11-03','2026-11-01']);
- const isolated=await (await t.withIdentity({subject:'other-manager|session'}).fetch('/days/history')).json();expect(isolated.days).toEqual([]);
+ const isolated=await (await other.fetch('/days/history')).json();expect(isolated.days).toEqual([]);
 });

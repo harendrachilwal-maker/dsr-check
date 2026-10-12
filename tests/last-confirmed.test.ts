@@ -2,9 +2,10 @@ import {test,expect,vi} from 'vitest';
 import {convexTest} from 'convex-test';
 import schema from '../convex/schema';
 import {makeRaw} from './comparison-fixture';
+import {propertyAccount} from './property-test-fixture';
 const modules=import.meta.glob('../convex/**/*.ts');
 test('Last confirmed is the most recent confirmation in this account, even for an older document date',async()=>{
- const t=convexTest(schema,modules),manager=t.withIdentity({subject:'manager-a|session'}),other=t.withIdentity({subject:'manager-b|session'});
+ const t=convexTest(schema,modules),manager=await propertyAccount(t),other=await propertyAccount(t,'other@example.invalid');
  const now=vi.spyOn(Date,'now');
  const save=async(date:string,expectedVersion:string|null=null)=>{
   const raw=makeRaw(),answer=JSON.parse(raw.output[0].content[0].text);answer.date=date;for(const doc of answer.documents)doc.date=date;raw.output[0].content[0].text=JSON.stringify(answer);

@@ -1,5 +1,8 @@
 Shaktimaan, here's my DESIGN.md for Build Sprint. Check it the way the Design thinking pages on the dashboard teach: labels instead of vague words, one reference per component with what to take and what to ignore, one font, a few sizes and the colours, every screen with its empty, loading, error and done states, first-screen words that say the outcome, and principles that hold on every screen. Tell me the weakest part first and make me rewrite it. Don't write it for me.# DESIGN.md
 Read this before building or changing any screen. If a choice isn't covered here, ask me instead of guessing.
+
+**Current scope authority:** Section 12 records the explicitly approved development-only single-property owner extension of 2026-10-12. It replaces the older shared-staff setup and blanket exclusion of owner web screens only within that narrow scope. The earlier broad Reports dashboard, WhatsApp automation and approval descriptions are future vision, not additional work authorised by this extension. Sections 6–10 remain the existing visual foundation, including the section 7 receipt exception; no global redesign is approved.
+
 1.The feeling, in labels
 1. Centred, single-column layout
 - Element: Manager upload page headline, supporting instructions, and primary upload button.
@@ -322,6 +325,7 @@ Confirmation rules:
 - Manager confirmation does not mean owner financial approval.
 - Preserve original documents, corrections, and verification history.
 Reports dashboard — Website
+Scope note: This older broad dashboard description is not the milestone 8 implementation scope. Use section 12 for the approved property month view, controls and receipts; cash-count records, financial approval, evidence decisions and automatic WhatsApp features remain outside that extension.
 For: Allowing the owner to inspect full Digital DSR records, cash information, supporting evidence, financial history, and approval statuses whenever needed.
 Top to bottom: Dated report history · Reporting status · Revenue · Cash · UPI · Guest payments · OTA payments · Expenses · Dues · Cash differences · Flagged items · Original documents · Explanations · Evidence decisions · Financial approval history
 Main action: Open Report → displays the selected date's full Digital DSR.
@@ -499,7 +503,7 @@ When a manager opens a confirmed day from History, show a centred receipt card i
 - Receipt background: warm ivory #FAF7EF, with a soft warm border #DED7C8.
 - Figures: existing dark slate #17212F. Supporting text: warm #655F55.
 - Preserve the existing green Matches, amber Check and grey Not enough info treatments for Sales vs money.
-- Use Georgia with serif fallbacks only for the hotel name and document date inside the receipt. The hotel name is “Himalaya Mount View Resort”, the public name already recorded in IDEA_SCOPE.md; this is display copy, not a new saved field.
+- Use Georgia with serif fallbacks only for the hotel name and document date inside the receipt. The original hotel name is “Himalaya Mount View Resort”, the public name already recorded in IDEA_SCOPE.md; this is display copy, not a new saved field in this earlier receipt revision. The approved property extension in section 12 uses the authorised property's saved name instead.
 - Keep Inter for amounts, labels, warnings, badges, the confirmation timestamp and all surrounding interface. Amounts are bold 24px with tabular numerals and Indian ₹ formatting. Supporting text is 14px, the hotel name is 24px, and the document date is 20px.
 - Keep existing fonts, sizes and colours outside the receipt. Add no bright colours or shadows.
 
@@ -660,3 +664,56 @@ MVP validation
 - Test loading, empty, failed read, missing value, saved zero, unresolved check, changed version and owner-approval-unavailable states.
 - Confirm no new network/AI image calls and no changes to original saved data, WhatsApp text sharing, financial logic or permissions.
 - Treat this as a proposed design specification until implemented and tested; do not claim it is already deployed
+
+## 12. Approved property-owner extension (development only, 2026-10-12)
+
+### Purpose and boundaries
+
+Give one property owner a private setup and saved-month review surface, with one invited manager and owner edits that preserve report history. This is the narrow milestone 8 scope in PRODUCT.md section 8 and PLAN.md. It supersedes older owner-screen exclusions and shared-staff setup only for the features listed here. Add no automatic invitation email, WhatsApp API, financial approval, owner Q&A, extra staff roles, multi-property controls or stored photos.
+
+Keep the existing manager upload, reading, corrections, confirmation/replacement, History and Send to owner experience. Property membership changes who may reach those records; it does not authorise a redesign of those surfaces or a different confirmation workflow.
+
+### Existing visual language
+
+- Use Inter for onboarding, owner controls, month figures, labels and actions. Retain the section 8 hierarchy: left-aligned 32px page headings, 20px section headings, saved figures at 24px on phones and 32px from 700px, 16px body/actions and 14px secondary text and badges. Amounts use tabular numerals and Indian ₹ formatting.
+- Keep the cool #F8FAFC page ground, white panels, dark slate #17212F text, muted #405453 supporting text and quiet #DCE4E2 borders. Blue #1D4ED8 remains for the current primary action; #B42318 remains for errors. Reuse the existing green Matches, amber Check and grey Not enough info badges with words as well as colour.
+- Use the existing centred single column capped at 720px, 24px horizontal padding or 16px at widths up to 350px, 16px panel corners, 8px action corners and at least 48px tap targets. Keep labels with their controls, allow long property names/emails/₹ amounts to wrap, and avoid horizontal scrolling at 320px and 390px.
+- Use existing spacing, borders and focus treatment. Add no new fonts, illustrations, generated assets, shadows, decorative patterns or motion to the new owner surfaces. The opened saved-day receipt alone retains section 7's approved ivory, serif heading and isolated faint strips.
+
+### Owner sign-in and property setup
+
+Use the existing Convex email/password sign-in and sign-up, with the same loading, validation and recovery behaviour. After authentication, an owner without a property sees a short explanation and a property-name field with one Create property action. A returning owner sees their property and month view. Do not ask for a full hotel profile, WhatsApp credentials, payment details or accounting configuration.
+
+Before a property exists, show an honest setup state rather than a dashboard full of example figures. While creating, show progress and prevent duplicate submissions. On failure, preserve the entered name and offer retry. Successful setup shows the created property and the next Invite manager action; do not imply a manager has joined yet.
+
+### Invitation and owner controls
+
+- The owner enters one manager email. After a successful backend invitation, show the intended email and a private link with Copy invite link. Explain that the owner shares the link themselves. No Sent email or Delivered wording is permitted because the app has no email-delivery service.
+- Keep invitation creation, link copying and manager acceptance as separate states. While creating, disable duplicate submission; on failure preserve the email and show recovery. Only report a copied link after copying succeeds, with a selectable link available if copying fails.
+- The invited manager signs in or signs up with the invited email before acceptance. While membership is being checked, show a loading state with no property records. A wrong account, invalid link, removed access or previously unavailable invitation shows a clear recovery state; never use the private link alone as authority to display records.
+- Once joined, show the current manager email and a secondary Remove manager action. Removal must explain that access will stop while reports stay saved, then use the existing confirm/cancel pattern. Show success only after the backend revokes access; on failure keep the current state and offer retry.
+- A removed manager sees an access-unavailable state with sign-out available. No stale card, receipt, share link or edit action may remain usable as though membership were still active.
+
+### Owner saved-month dashboard
+
+Top to bottom: Property name · month selection · five saved totals · Sales vs money counts · days with a missing amount · saved dates · manager controls. Keep the month selection visible and bounded; use the existing month/year and short-date formats. Selecting a month never mixes its figures with the previous month's result.
+
+The five totals are Room revenue, Food revenue, Guest cash, Guest UPI and Expenses, from the property's saved corrected reports. Keep missing or uncertain contributing amounts visible as incomplete, separate from ₹0; do not substitute original AI readings or use supporting-evidence amounts. Show only the backend result, not a calculation invented in the interface.
+
+Show the existing three Sales vs money counts, labelled Matches, Check and Not enough info. These count saved reports' Sales vs money results; they do not describe supporting-evidence completeness or owner approval. The missing-amount count means saved confirmed days with at least one missing or uncertain value among the five summary figures. Label it as days with a missing amount; do not describe it as absent calendar days or introduce a reporting-calendar calculation.
+
+Saved dates open the existing receipt. Keep number hierarchy before decoration and keep the manager invitation/removal controls secondary once reports exist. With no saved reports in the selected month, show an honest empty state without zero-filled financial totals or invented dates. While loading, show loading words and withhold unverified totals and badges. On failure, show retry with the selected month intact. A changed saved version prompts a fresh read rather than mixed-version figures.
+
+### Saved-day receipt and owner editing
+
+Use section 7's existing receipt presentation for a loaded saved date, with its five summary amounts, missing-value wording, saved zeros, warnings, Sales vs money result and original manager confirmation time. Surrounding controls stay in Inter and the existing palette. Use the property name only from authorised saved property data; do not reuse one hotel's name for another property.
+
+The owner can edit a saved label or amount with explicit Save changes and Cancel. Keep the saved value and original reading available for comparison, preserve the entered value after validation or save failure, and keep actions reachable when the phone keyboard is open. Cancel discards only the unsaved edit. No automatic save or financial Approve action is in scope.
+
+A successful save creates a new report version. Display the owner change as an owner edit with its recorded time; retain the original manager confirmation, original AI values, manager corrections and earlier versions. Never label the owner edit as a new Confirmed by manager event or Owner Approved. Updated saved figures and check results must come from the new backend version. If another save changed the version, withhold success, preserve the entered edit and ask the owner to refresh the report before saving against the current version.
+
+### Data boundaries and validation still required
+
+All setup, invitation, reads, edits and manager operations require backend checks for the signed-in account, active property membership and role. Attach only the current authenticated account's own private legacy account-scoped data when creating its property; no bulk test-account or anonymous-browser migration. Keep all saved dates and versions, and keep photos unstored.
+
+This section records approved scope and intended screen behaviour, not completed or tested work. Verify setup, invitation acceptance and wrong-email rejection, owner/month/receipt/edit flows, removed-manager and cross-property denial, and all existing manager flows. Review 320px, 390px and desktop widths with fabricated records, including loading, empty, missing, zero, long-value, failed-read and stale-version states. Require a separate read-only review and the owner's development acceptance before updating PROGRESS.md or considering shipping; no production change or deployment is authorised here.

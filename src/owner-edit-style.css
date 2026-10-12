@@ -1,0 +1,11 @@
+.owner-editor { margin: 32px 0; min-width: 0; }
+.owner-editor > h2 { margin-top: 0; }
+.owner-editor > p, .owner-edit-source { color: #405453; font-size: 14px; }
+.owner-edit-line { border-bottom: 1px solid #DCE4E2; padding: 20px 0; overflow-wrap: anywhere; }
+.owner-edit-line > p:first-child { color: #405453; font-size: 14px; }
+.owner-edit-line h3 { font-size: 16px; margin: 8px 0; }
+.owner-edit-line > p { margin: 8px 0; }
+.owner-edit-line .line-editor { min-width: 0; }
+.owner-editor-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.owner-editor-actions > button { flex: 1 1 140px; min-width: 0; }
+.owner-editor .form-error { color: #B42318; }

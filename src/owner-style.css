@@ -1,0 +1,53 @@
+/* Owner reading and invitation surfaces inherit the existing manager palette and type. */
+.owner-view { min-width: 0; }
+.owner-view > header { margin-bottom: 28px; }
+.owner-view > header h1 { font-size: 32px; line-height: 1.2; letter-spacing: -.03em; text-align: left; }
+.owner-view > header p { margin: 16px 0 0; color: #405453; overflow-wrap: anywhere; text-align: left; }
+.owner-view > nav { margin-bottom: 16px; }
+.owner-view > div > .owner-invitation { margin: 32px 0 0; padding-top: 16px; }
+.owner-day { margin-bottom: 32px; }
+.owner-day .day-receipt { margin-bottom: 12px; }
+.owner-day-actions { display: flex; justify-content: flex-end; }
+.owner-day-actions button { font-size: 14px; border-color: #CCD6D5; }
+.property-setup { margin-top: 32px; }
+.property-setup header h1 { font-size: 32px; line-height: 1.2; letter-spacing: -.03em; text-align: left; }
+.property-setup header p { text-align: left; color: #405453; }
+.owner-month-field { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; width: 100%; min-height: 48px; padding: 12px; margin-bottom: 28px; border: 1px solid #CCD6D5; border-radius: 8px; background: #FFFFFF; overflow: hidden; }
+.owner-month-field input { position: absolute; inset: 0; width: 100%; min-width: 0; max-width: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.owner-month-field span, .owner-month-field svg { pointer-events: none; }
+.owner-month-field svg { flex: none; }
+.owner-month-field:focus-within { outline: 2px solid #17212F; outline-offset: 4px; }
+.owner-month-content { min-width: 0; }
+.owner-month-summary { padding: 24px 20px; border: 1px solid #DCE4E2; border-radius: 16px; background: #FFFFFF; }
+.owner-month-summary > h2, .owner-empty h2 { margin: 0; font-size: 20px; }
+.owner-month-count { margin: 4px 0 24px; font-size: 14px; color: #405453; }
+.owner-month-totals { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px 16px; margin: 0; }
+.owner-month-totals > div { min-width: 0; padding: 0; border: 0; }
+.owner-month-totals > div:last-child { grid-column: 1 / -1; padding-top: 20px; border-top: 1px solid #DCE4E2; }
+.owner-month-totals dt { color: #405453; font-size: 14px; font-weight: 400; }
+.owner-month-totals dd { margin: 8px 0 0; font-size: 24px; font-weight: 700; line-height: 1.25; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.owner-month-totals .owner-not-read { color: #405453; font-size: 14px; line-height: 1.5; letter-spacing: normal; font-weight: 400; }
+.owner-total-note { margin: 4px 0 0; font-size: 14px; color: #405453; }
+.owner-check-counts { margin-top: 24px; padding-top: 24px; border-top: 1px solid #DCE4E2; }
+.owner-check-counts h3 { margin: 0 0 16px; font-size: 16px; }
+.owner-check-counts dl { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr); gap: 16px 8px; margin: 0; }
+.owner-check-counts .sales-money-check { min-width: 0; border: 0; margin: 0; padding: 0; display: grid; grid-template-rows: minmax(50px,auto) auto; align-items: start; justify-items: start; gap: 8px; }
+.owner-check-counts .sales-money-badge { max-width: 100%; text-wrap: balance; }
+.owner-check-counts dd { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.25; }
+.owner-missing-count { margin: 24px 0 0; padding-top: 20px; border-top: 1px solid #DCE4E2; font-size: 14px; color: #405453; }
+.owner-summary-note { margin: 12px 0 0; color: #405453; font-size: 14px; }
+.owner-receipts > h2 { margin: 32px 0 16px; }
+.owner-receipts .day-receipt:last-child { margin-bottom: 0; }
+.owner-empty { padding: 24px 0; }
+.owner-empty p { color: #405453; }
+.owner-invitation { min-width: 0; margin-top: 32px; padding-top: 16px; border-top: 1px solid #DCE4E2; }
+.owner-invitation > summary { font-size: 14px; color: #405453; font-weight: 700; }
+.owner-invitation p, .owner-invitation label, .owner-invitation button { font-size: 14px; }
+.owner-invitation p { color: #405453; overflow-wrap: anywhere; }
+.owner-invitation label { margin-top: 16px; }
+.owner-invitation input { width: 100%; min-width: 0; max-width: 100%; min-height: 48px; font: inherit; padding: 12px; border: 1px solid #CCD6D5; border-radius: 8px; background: #FFFFFF; color: #17212F; }
+.owner-invitation button { margin-top: 12px; }
+.owner-invitation .owner-invite-link { font-size: 14px; font-variant-numeric: normal; }
+.owner-invitation .form-error { color: #B42318; }
+@media (max-width: 350px) { .owner-month-summary { padding-inline: 16px; } .owner-check-counts .sales-money-badge { padding-inline: 6px; font-size: 13px; } }
+@media (min-width: 700px) { .owner-month-totals dd:not(.owner-not-read), .owner-check-counts dd { font-size: 32px; } }
