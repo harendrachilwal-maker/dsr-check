@@ -31,9 +31,8 @@ const sampleDailyMessage = [
 ].join('\n');
 
 const plans = [
-  {name: 'Monthly', amount: '₹499', bestValue: false},
-  {name: '6 months', amount: '₹2,994', bestValue: false},
-  {name: 'Yearly', amount: '₹4,990', bestValue: true},
+  {name: 'Monthly', amount: '₹399', oldAmount: '₹499', bestValue: false},
+  {name: 'Yearly', amount: '₹3,990', oldAmount: '₹4,990', bestValue: true},
 ] as const;
 
 const planContactLink = (name: string, amount: string) =>
@@ -144,15 +143,18 @@ export function Landing({onStartOwner, onSignIn}: LandingProps) {
         <h2 id="landing-price-heading">Price</h2>
         <div className="landing-plans">
           {plans.map((plan, index) => (
-            <article className={`landing-plan${plan.bestValue ? ' landing-plan-best' : ''}`} aria-labelledby={`landing-plan-${index}`} key={plan.name}>
+            <div key={plan.name}>
+              {plan.oldAmount && <p className="landing-plan-offer">Launch offer</p>}
+              <article className={`landing-plan${plan.bestValue ? ' landing-plan-best' : ''}`} aria-labelledby={`landing-plan-${index}`}>
               <div className="landing-plan-header">
                 <h3 id={`landing-plan-${index}`}>{plan.name}</h3>
                 {plan.bestValue && <span className="landing-plan-tag">Best value, 2 months free</span>}
               </div>
-              <p className="landing-plan-amount">{plan.amount}</p>
+              <p className="landing-plan-amount">{plan.oldAmount && <><s>{plan.oldAmount}</s>{' '}</>}<span>{plan.amount}</span></p>
               <p className="landing-plan-unit">Per property</p>
               <a className="landing-plan-contact secondary" href={planContactLink(plan.name, plan.amount)} target="_blank" rel="noopener noreferrer">Talk to me on WhatsApp</a>
-            </article>
+              </article>
+            </div>
           ))}
         </div>
         <p className="landing-pricing-note">Opens WhatsApp. Choose your contact.</p>

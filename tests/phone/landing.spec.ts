@@ -63,10 +63,19 @@ for(const width of [320,390,1280])test(`public landing, sample receipt and exist
  const privacy=page.getByRole('region',{name:'Your data stays private',exact:true});
  await expect(privacy).toContainText('We don’t save your uploaded photos. Each property can access only its own saved days.');
  const price=page.getByRole('region',{name:'Price',exact:true});
- await expect(price.getByRole('article')).toHaveCount(3);
- for(const [name,amount] of [['Monthly','₹499'],['6 months','₹2,994'],['Yearly','₹4,990']] as const){
+ await expect(price.getByRole('article')).toHaveCount(2);
+ await expect(price.getByText('6 months',{exact:true})).toHaveCount(0);
+ const offerLabels=price.getByText('Launch offer',{exact:true});
+ await expect(offerLabels).toHaveCount(2);
+ for(const [index,[name,amount,oldAmount]] of ([['Monthly','₹399','₹499'],['Yearly','₹3,990','₹4,990']] as const).entries()){
   const plan=price.getByRole('article',{name,exact:true});
   await expect(plan.getByText(amount,{exact:true})).toBeVisible();await expect(plan.getByText('Per property',{exact:true})).toBeVisible();
+  if(oldAmount){
+   const oldPrice=plan.getByText(oldAmount,{exact:true});await expect(oldPrice).toBeVisible();
+   expect(await oldPrice.evaluate(node=>getComputedStyle(node).textDecorationLine)).toContain('line-through');
+   const labelBox=(await offerLabels.nth(index===0?0:1).boundingBox())!,cardBox=(await plan.boundingBox())!;
+   expect(labelBox.y+labelBox.height).toBeLessThanOrEqual(cardBox.y);
+  }else await expect(plan.locator('s')).toHaveCount(0);
   const contact=plan.getByRole('link',{name:'Talk to me on WhatsApp',exact:true}),url=new URL((await contact.getAttribute('href'))!);
   expect(url.origin).toBe('https://wa.me');expect(url.pathname).toBe('/');
   expect(url.searchParams.get('text')).toBe(`Hi, I'm interested in the ${name} plan (${amount} per property).`);
@@ -80,9 +89,9 @@ for(const width of [320,390,1280])test(`public landing, sample receipt and exist
  await expect(finalActions.getByRole('button',{name:'Start as owner',exact:true})).toBeVisible();
  await expect(finalActions.getByRole('button')).toHaveCount(1);
  await expect(page.getByRole('button',{name:'Start as owner',exact:true})).toHaveCount(2);
- await expect(page.getByRole('link',{name:'Talk to me on WhatsApp',exact:true})).toHaveCount(3);
+ await expect(page.getByRole('link',{name:'Talk to me on WhatsApp',exact:true})).toHaveCount(2);
  await expect(page.getByRole('button',{name:'Talk to me on WhatsApp',exact:true})).toHaveCount(0);
- await expect(page.locator('a[href*="wa.me"]')).toHaveCount(3);
+ await expect(page.locator('a[href*="wa.me"]')).toHaveCount(2);
  const benefitsTop=(await ownerBenefits.boundingBox())!.y,privacyTop=(await privacy.boundingBox())!.y,priceTop=(await price.boundingBox())!.y,finalTop=(await finalActions.boundingBox())!.y;
  expect(benefitsTop).toBeGreaterThan(844);expect(privacyTop).toBeGreaterThan(benefitsTop);expect(priceTop).toBeGreaterThan(privacyTop);expect(finalTop).toBeGreaterThan(priceTop);
  await expect(page.getByLabel('Email',{exact:true})).toHaveCount(0);
@@ -95,7 +104,8 @@ for(const width of [320,390,1280])test(`public landing, sample receipt and exist
  await page.evaluate(async()=>{await document.fonts.ready;scrollTo(0,0);});
  await page.screenshot({path:`.test-results/landing-pricing-full-${width}.png`,fullPage:true,animations:'disabled'});
  const pricingBox=(await price.boundingBox())!;
- await page.screenshot({path:`.test-results/landing-pricing-${width}.png`,fullPage:true,clip:{x:0,y:Math.max(0,pricingBox.y-16),width,height:pricingBox.height+32},animations:'disabled'});
+ const finalBox=(await finalActions.boundingBox())!;
+ await page.screenshot({path:`.test-results/landing-launch-offer-${width}.png`,fullPage:true,clip:{x:0,y:Math.max(0,pricingBox.y-16),width,height:finalBox.y+finalBox.height-pricingBox.y+32},animations:'disabled'});
  // Both choices still lead to the existing forms, including their toggle links.
  const owner=page.getByRole('button',{name:'Start as owner',exact:true}).first();
  await owner.focus();await expect(owner).toBeFocused();await page.keyboard.press('Enter');
@@ -117,7 +127,7 @@ test('pricing is static with reduced motion and reveals only once when motion is
  await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');
  const price=page.getByRole('region',{name:'Price',exact:true});await price.scrollIntoViewIfNeeded();
  expect(await price.evaluate(node=>node.getAnimations({subtree:true}).length)).toBe(0);
- for(const amount of ['₹499','₹2,994','₹4,990'])await expect(price.getByText(amount,{exact:true})).toBeVisible();
+ for(const amount of ['₹399','₹3,990'])await expect(price.getByText(amount,{exact:true})).toBeVisible();
  await page.emulateMedia({reducedMotion:'no-preference'});await page.reload();await expect(page.getByRole('heading',{name:landingHeadline,exact:true})).toBeVisible();
  const played=await price.evaluate(async node=>{
   node.scrollIntoView();await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
@@ -128,7 +138,7 @@ test('pricing is static with reduced motion and reveals only once when motion is
   node.scrollIntoView();await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
  });
  expect(await price.evaluate(node=>node.getAnimations({subtree:true}).length)).toBe(0);
- for(const amount of ['₹499','₹2,994','₹4,990'])await expect(price.getByText(amount,{exact:true})).toBeVisible();
+ for(const amount of ['₹399','₹3,990'])await expect(price.getByText(amount,{exact:true})).toBeVisible();
 });
 
 test('Start as owner creates an empty private property without saving the sample receipt at 390px',async({page})=>{

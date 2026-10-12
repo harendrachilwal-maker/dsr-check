@@ -219,6 +219,13 @@
   transform-origin: center top;
 }
 
+.landing-plan-offer {
+  margin: 0 0 8px;
+  color: #405453;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .landing-plan-best {
   border-color: #405453;
   background: #F3F6F5;
@@ -249,12 +256,22 @@
 }
 
 .landing-plan-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
   margin: 16px 0 4px;
   font-size: 24px;
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
+}
+
+.landing-plan-amount s {
+  color: #405453;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
 }
 
 .landing-plan-unit,
